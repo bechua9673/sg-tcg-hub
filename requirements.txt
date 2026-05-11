@@ -1,0 +1,7 @@
+playwright
+playwright-stealth
+supabase
+beautifulsoup4
+lxml
+python-dateutil
+requests
