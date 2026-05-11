@@ -1,0 +1,29 @@
+name: TCG Hub Scraper Sync
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs every 6 hours
+  workflow_dispatch:      # Allows you to run it manually for testing
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+
+      - name: Run Scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python final_scraper.py
