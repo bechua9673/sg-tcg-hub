@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SG TCG HUB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111; }
+        .tab-active { border-bottom: 2px solid #111; color: #111; font-weight: 800; }
+        .card { border: 1px solid #efefef; transition: 0.2s; }
+        .card:hover { border-color: #111; background: #fafafa; }
+        .section-header { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; border-bottom: 2px solid #111; display: inline-block; padding-bottom: 2px; margin-bottom: 24px; text-transform: uppercase; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+    <nav class="border-b sticky top-0 bg-white/90 backdrop-blur-md z-50">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-baseline">
+            <div>
+                <h1 class="text-xl font-black tracking-tighter uppercase leading-none">SG TCG HUB</h1>
+                <p id="status" class="text-[9px] text-gray-400 font-mono mt-2 uppercase tracking-widest">Connected</p>
+            </div>
+            <div class="flex space-x-10 text-[11px] font-bold uppercase tracking-widest">
+                <button onclick="setTab('pokemon')" id="tab-pokemon" class="pb-1 tab-active">Pokémon</button>
+                <button onclick="setTab('one piece')" id="tab-onepiece" class="pb-1 text-gray-300 hover:text-black">One Piece</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        
+        <section class="mb-20">
+            <h2 class="section-header">Local Pre-Orders & Products</h2>
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                </div>
+        </section>
+
+        <section>
+            <h2 class="section-header">Global Articles</h2>
+            <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Use the specific publishable key provided
+        const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
+        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7";
+        const _client = supabase.createClient(S_URL, S_KEY);
+
+        let currentTab = 'pokemon';
+
+        async function fetchHub() {
+            const { data, error } = await _client
+                .from('TCG_NEWS')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Fetch Error:", error);
+                document.getElementById('status').innerText = "Sync Error";
+                return;
+            }
+            render(data);
+        }
+
+        function render(data) {
+            const prodGrid = document.getElementById('product-grid');
+            const newsGrid = document.getElementById('news-grid');
+            
+            prodGrid.innerHTML = ''; 
+            newsGrid.innerHTML = '';
+
+            // 1. BROAD FRANCHISE FILTERING
+            // We check the source first (most reliable), then the title.
+            const filtered = data.filter(item => {
+                const src = item.source.toLowerCase();
+                const title = item.title.toLowerCase();
+
+                if (currentTab === 'pokemon') {
+                    return src.includes('pokemon') || src.includes('pokebeach') || src.includes('sawadee') || src.includes('1collectibles') || title.includes('pokemon') || title.includes('mega');
+                } else {
+                    return src.includes('one piece') || src.includes('onepieceplayer') || title.includes('one piece') || title.includes('op-') || src.includes('real troves');
+                }
+            });
+
+            filtered.forEach(item => {
+                const card = `
+                    <a href="${item.url}" target="_blank" class="card overflow-hidden block h-full relative">
+                        ${item.price ? `
+                            <div class="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 z-10">
+                                ${item.price}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="h-44 w-full bg-gray-50 border-b border-gray-100 overflow-hidden">
+                            <img src="${item.image_url}" 
+                                 class="w-full h-full object-cover transition-transform hover:scale-105" 
+                                 onerror="this.src='https://placehold.co/400?text=${item.source.replace(/ /g, '+')}'">
+                        </div>
+
+                        <div class="p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-[9px] font-black uppercase text-gray-400 tracking-tighter">${item.source}</span>
+                                <span class="text-[9px] font-mono text-gray-300">
+                                    ${item.published_date ? new Date(item.published_date).toLocaleDateString() : new Date(item.created_at).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <h3 class="text-xs font-semibold leading-relaxed line-clamp-3">${item.title}</h3>
+                        </div>
+                    </a>
+                `;
+
+                // 2. CATEGORY-BASED SORTING
+                // Products go to Local Drops, everything else to News
+                if (item.category === 'Local Drops') {
+                    prodGrid.innerHTML += card;
+                } else {
+                    newsGrid.innerHTML += card;
+                }
+            });
+
+            document.getElementById('status').innerText = `Updated at ${new Date().toLocaleTimeString()}`;
+        }
+
+        function setTab(t) {
+            currentTab = t;
+            document.getElementById('tab-pokemon').className = t === 'pokemon' ? 'pb-1 tab-active' : 'pb-1 text-gray-300 hover:text-black';
+            document.getElementById('tab-onepiece').className = t === 'one piece' ? 'pb-1 tab-active' : 'pb-1 text-gray-300 hover:text-black';
+            fetchHub();
+        }
+
+        // Initial Load
+        fetchHub();
+        // Refresh data every 5 minutes
+        setInterval(fetchHub, 300000);
+    </script>
+</body>
+</html>
