@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUB ADMIN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 border border-gray-200 shadow-sm w-96">
+            <h1 class="text-xl font-black uppercase mb-6 border-b-2 border-black inline-block pb-1">Admin Login</h1>
+            <input type="email" id="email" placeholder="Admin Email" class="w-full mb-4 p-2 border bg-gray-50 text-sm">
+            <input type="password" id="password" placeholder="Password" class="w-full mb-6 p-2 border bg-gray-50 text-sm">
+            <button onclick="login()" class="w-full bg-black text-white font-bold uppercase text-xs py-3 hover:bg-gray-800">Login</button>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-6xl mx-auto px-6 py-12">
+        <div class="flex justify-between items-center mb-12">
+            <h1 class="text-2xl font-black uppercase tracking-tighter">TCG Hub Control</h1>
+            <button onclick="logout()" class="text-xs font-bold text-gray-500 hover:text-black uppercase">Logout</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 border border-gray-200 sticky top-6">
+                    <h2 class="text-xs font-black uppercase tracking-widest mb-6">Add Manual Post</h2>
+                    <input type="text" id="m-title" placeholder="Title" class="w-full mb-3 p-2 border text-xs">
+                    <input type="text" id="m-url" placeholder="Destination URL" class="w-full mb-3 p-2 border text-xs">
+                    <input type="text" id="m-source" placeholder="Source Name (e.g. Official)" class="w-full mb-3 p-2 border text-xs">
+					<select id="m-category" class="w-full mb-3 p-2 border text-xs">
+						<option value="Global News">Global News</option>
+						<option value="Local Drops">Local Drops</option>
+					</select>
+					<select id="m-franchise" class="w-full mb-3 p-2 border text-xs">
+						<option value="pokemon">Pokémon</option>
+						<option value="one piece">One Piece</option>
+					</select>
+					<input type="text" id="m-img" placeholder="Image URL (Optional)" class="w-full mb-6 p-2 border text-xs">
+                    <button onclick="addPost()" class="w-full bg-black text-white font-bold uppercase text-[10px] py-3">Publish Post</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <h2 class="text-xs font-black uppercase tracking-widest mb-6">Manage Scraped Posts</h2>
+                <div id="admin-grid" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
+        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; 
+        const _client = supabase.createClient(S_URL, S_KEY);
+
+        // --- AUTH LOGIC ---
+        async function checkSession() {
+            const { data: { session } } = await _client.auth.getSession();
+            if (session) showDashboard();
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await _client.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+                document.getElementById('login-error').innerText = error.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            } else {
+                showDashboard();
+            }
+        }
+
+        async function logout() {
+            await _client.auth.signOut();
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadAdminData();
+        }
+
+        // --- DATA LOGIC ---
+// --- UPDATED JAVASCRIPT FOR ADMIN ---
+		async function loadAdminData() {
+			const { data, error } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(50);
+			if (error) return;
+			
+			const grid = document.getElementById('admin-grid');
+			grid.innerHTML = '';
+
+			data.forEach(item => {
+				const isHidden = item.hidden;
+				const franchiseColor = item.franchise === 'pokemon' ? 'text-blue-600' : 'text-red-600';
+				
+				const row = `
+					<div class="bg-white border ${isHidden ? 'border-red-300 bg-red-50' : 'border-gray-200'} p-4 flex justify-between items-center">
+						<div>
+							<span class="text-[9px] font-black uppercase text-gray-400 block mb-1">
+								${item.source} | ${item.category} | <span class="${franchiseColor}">${item.franchise || 'UNASSIGNED'}</span>
+							</span>
+							<h3 class="text-sm font-semibold ${isHidden ? 'line-through text-gray-500' : ''}">${item.title}</h3>
+						</div>
+						<div class="flex space-x-2">
+							<button onclick="toggleFranchise('${item.url}', '${item.franchise}')" class="px-3 py-2 text-[9px] font-bold uppercase bg-gray-100 hover:bg-gray-200">
+								Swap Franchise
+							</button>
+							<button onclick="toggleVisibility('${item.url}', ${isHidden})" class="px-4 py-2 text-[10px] font-bold uppercase ${isHidden ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'}">
+								${isHidden ? 'Unhide' : 'Hide'}
+							</button>
+						</div>
+					</div>
+				`;
+				grid.innerHTML += row;
+			});
+		}
+
+		// NEW: Toggle Franchise Function
+		async function toggleFranchise(url, currentFranchise) {
+			const newFranchise = currentFranchise === 'pokemon' ? 'one piece' : 'pokemon';
+			await _client.from('TCG_NEWS').update({ franchise: newFranchise }).eq('url', url);
+			loadAdminData(); // Refresh
+		}
+
+		// UPDATED: Add Post Function
+		async function addPost() {
+			const post = {
+				title: document.getElementById('m-title').value,
+				url: document.getElementById('m-url').value,
+				source: document.getElementById('m-source').value,
+				category: document.getElementById('m-category').value,
+				franchise: document.getElementById('m-franchise').value, // Grabs franchise
+				image_url: document.getElementById('m-img').value || null,
+				hidden: false
+			};
+			const { error } = await _client.from('TCG_NEWS').upsert(post, { onConflict: 'url' });
+			if (!error) { alert("Post Added!"); loadAdminData(); }
+		}
+
+        checkSession();
+    </script>
+</body>
+</html>

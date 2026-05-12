@@ -6,139 +6,195 @@
     <title>SG TCG HUB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111; }
-        .tab-active { border-bottom: 2px solid #111; color: #111; font-weight: 800; }
-        .card { border: 1px solid #efefef; transition: 0.2s; }
-        .card:hover { border-color: #111; background: #fafafa; }
-        .section-header { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; border-bottom: 2px solid #111; display: inline-block; padding-bottom: 2px; margin-bottom: 24px; text-transform: uppercase; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #111827; }
+        
+        /* Two-Tier Navigation Styling */
+        .nav-view-btn { padding: 8px 16px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; transition: all 0.2s; border-radius: 6px; }
+        .nav-view-btn:hover { color: #111827; background: #f3f4f6; }
+        .nav-view-active { color: #111827; background: #f3f4f6; }
+
+        .pill-btn { padding: 6px 16px; font-size: 12px; font-weight: 600; color: #4b5563; background: #fff; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; white-space: nowrap; cursor: pointer;}
+        .pill-btn:hover { border-color: #111827; color: #111827; }
+        .pill-active { background: #111827; color: #ffffff; border-color: #111827; }
+        .pill-active:hover { color: #ffffff; }
+
+        /* Card Styling */
+        .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #d1d5db; }
+        
+        /* Typography */
+        .vendor-header { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.1em; color: #374151; text-transform: uppercase; display: flex; items-center; margin-bottom: 16px; }
+        .vendor-header::after { content: ""; flex-grow: 1; height: 1px; background: #e5e7eb; margin-left: 16px; margin-top: auto; margin-bottom: auto;}
+        
+        /* Hide Scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
 
-    <nav class="border-b sticky top-0 bg-white/90 backdrop-blur-md z-50">
-        <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-baseline">
-            <div>
-                <h1 class="text-xl font-black tracking-tighter uppercase leading-none">SG TCG HUB</h1>
-                <p id="status" class="text-[9px] text-gray-400 font-mono mt-2 uppercase tracking-widest">Connected</p>
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6">
+            
+            <div class="py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-gray-100">
+                <div class="text-center md:text-left">
+                    <h1 class="text-2xl font-black tracking-tighter uppercase leading-none">SG TCG HUB</h1>
+                    <p id="status" class="text-[10px] text-gray-400 font-mono mt-1 uppercase tracking-widest">Fetching Data...</p>
+                </div>
+                <nav class="flex space-x-2 bg-white rounded-lg">
+                    <button onclick="setView('Global News')" class="nav-view-btn nav-view-active" data-view="Global News">Global Articles</button>
+                    <button onclick="setView('Local Drops')" class="nav-view-btn" data-view="Local Drops">Products</button>
+                    <button onclick="setView('Local News')" class="nav-view-btn" data-view="Local News">Local News</button>
+                </nav>
             </div>
-            <div class="flex space-x-10 text-[11px] font-bold uppercase tracking-widest">
-                <button onclick="setTab('pokemon')" id="tab-pokemon" class="pb-1 tab-active">Pokémon</button>
-                <button onclick="setTab('one piece')" id="tab-onepiece" class="pb-1 text-gray-300 hover:text-black">One Piece</button>
+
+            <div class="py-4 flex space-x-3 overflow-x-auto no-scrollbar items-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Filter:</span>
+                <button onclick="setFranchise('all')" class="pill-btn pill-active" data-franchise="all">All</button>
+                <button onclick="setFranchise('pokemon')" class="pill-btn" data-franchise="pokemon">Pokémon</button>
+                <button onclick="setFranchise('one piece')" class="pill-btn" data-franchise="one piece">One Piece</button>
+                <button onclick="setFranchise('union arena')" class="pill-btn" data-franchise="union arena">Union Arena</button>
+                <button onclick="setFranchise('dbz')" class="pill-btn" data-franchise="dbz">DBZ</button>
+                <button onclick="setFranchise('gundam')" class="pill-btn" data-franchise="gundam">Gundam</button>
+                <button onclick="setFranchise('riftbound')" class="pill-btn" data-franchise="riftbound">Riftbound</button>
+                <button onclick="setFranchise('yu-gi-oh')" class="pill-btn" data-franchise="yu-gi-oh">Yu-Gi-Oh</button>
+                <button onclick="setFranchise('digimon')" class="pill-btn" data-franchise="digimon">Digimon</button>
+                <button onclick="setFranchise('hololive')" class="pill-btn" data-franchise="hololive">Hololive</button>
             </div>
+
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-12">
-        
-        <section class="mb-20">
-            <h2 class="section-header">Local Pre-Orders & Products</h2>
-            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                </div>
-        </section>
-
-        <section>
-            <h2 class="section-header">Global Articles</h2>
-            <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
-        </section>
-
+    <main class="max-w-7xl mx-auto px-6 py-10 min-h-screen">
+        <div id="content-container" class="space-y-12">
+            </div>
     </main>
 
     <script>
-        // Use the specific publishable key provided
         const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
-        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7";
+        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; // Public Anon Key
         const _client = supabase.createClient(S_URL, S_KEY);
 
-        let currentTab = 'pokemon';
+        // DEFAULT STATE: User enters and sees Global Articles across ALL franchises
+        let currentView = 'Global News'; 
+        let currentFranchise = 'all';
+        let allData = [];
 
         async function fetchHub() {
-            const { data, error } = await _client
-                .from('TCG_NEWS')
-                .select('*')
-                .order('created_at', { ascending: false });
+            document.getElementById('status').innerText = 'Syncing...';
+            const { data, error } = await _client.from('TCG_NEWS').select('*').is('hidden', false).order('created_at', { ascending: false });
+            if (error) { 
+                console.error("Fetch Error:", error); 
+                document.getElementById('status').innerText = 'Connection Error';
+                return; 
+            }
+            allData = data;
+            document.getElementById('status').innerText = `Live • Updated ${new Date().toLocaleTimeString()}`;
+            render();
+        }
 
-            if (error) {
-                console.error("Fetch Error:", error);
-                document.getElementById('status').innerText = "Sync Error";
+        function setView(viewName) {
+            currentView = viewName;
+            document.querySelectorAll('.nav-view-btn').forEach(btn => {
+                btn.classList.toggle('nav-view-active', btn.getAttribute('data-view') === viewName);
+            });
+            render();
+        }
+
+        function setFranchise(franchiseName) {
+            currentFranchise = franchiseName;
+            document.querySelectorAll('.pill-btn').forEach(btn => {
+                btn.classList.toggle('pill-active', btn.getAttribute('data-franchise') === franchiseName);
+            });
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('content-container');
+            container.innerHTML = '';
+
+            // 1. Filter Data by View and Franchise
+            let filteredData = allData.filter(item => item.category === currentView);
+            
+            if (currentFranchise !== 'all') {
+                filteredData = filteredData.filter(item => {
+                    const f = item.franchise ? item.franchise.toLowerCase() : 'others';
+                    return f === currentFranchise;
+                });
+            }
+
+            // 2. Empty State Handling
+            if (filteredData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-20 text-gray-400">
+                        <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p class="text-lg font-semibold">No items found.</p>
+                        <p class="text-sm">Try selecting a different franchise or view.</p>
+                    </div>`;
                 return;
             }
-            render(data);
-        }
 
-        function render(data) {
-            const prodGrid = document.getElementById('product-grid');
-            const newsGrid = document.getElementById('news-grid');
-            
-            prodGrid.innerHTML = ''; 
-            newsGrid.innerHTML = '';
+            // 3. Render Logic Based on View
+            if (currentView === 'Local Drops') {
+                // Group Products by Vendor
+                const groupedVendors = {};
+                filteredData.forEach(item => {
+                    const source = item.source.toUpperCase();
+                    if (!groupedVendors[source]) groupedVendors[source] = [];
+                    groupedVendors[source].push(item);
+                });
 
-            // 1. BROAD FRANCHISE FILTERING
-            // We check the source first (most reliable), then the title.
-            const filtered = data.filter(item => {
-                const src = item.source.toLowerCase();
-                const title = item.title.toLowerCase();
-
-                if (currentTab === 'pokemon') {
-                    return src.includes('pokemon') || src.includes('pokebeach') || src.includes('sawadee') || src.includes('1collectibles') || title.includes('pokemon') || title.includes('mega');
-                } else {
-                    return src.includes('one piece') || src.includes('onepieceplayer') || title.includes('one piece') || title.includes('op-') || src.includes('real troves');
+                for (const [vendor, items] of Object.entries(groupedVendors)) {
+                    let html = `<div class="mb-10"><h3 class="vendor-header">${vendor}</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">`;
+                    items.forEach(item => { html += buildCard(item); });
+                    html += `</div></div>`;
+                    container.innerHTML += html;
                 }
-            });
-
-            filtered.forEach(item => {
-                const card = `
-                    <a href="${item.url}" target="_blank" class="card overflow-hidden block h-full relative">
-                        ${item.price ? `
-                            <div class="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 z-10">
-                                ${item.price}
-                            </div>
-                        ` : ''}
-                        
-                        <div class="h-44 w-full bg-gray-50 border-b border-gray-100 overflow-hidden">
-                            <img src="${item.image_url}" 
-                                 class="w-full h-full object-cover transition-transform hover:scale-105" 
-                                 onerror="this.src='https://placehold.co/400?text=${item.source.replace(/ /g, '+')}'">
-                        </div>
-
-                        <div class="p-5">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-[9px] font-black uppercase text-gray-400 tracking-tighter">${item.source}</span>
-                                <span class="text-[9px] font-mono text-gray-300">
-                                    ${item.published_date ? new Date(item.published_date).toLocaleDateString() : new Date(item.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <h3 class="text-xs font-semibold leading-relaxed line-clamp-3">${item.title}</h3>
-                        </div>
-                    </a>
-                `;
-
-                // 2. CATEGORY-BASED SORTING
-                // Products go to Local Drops, everything else to News
-                if (item.category === 'Local Drops') {
-                    prodGrid.innerHTML += card;
-                } else {
-                    newsGrid.innerHTML += card;
-                }
-            });
-
-            document.getElementById('status').innerText = `Updated at ${new Date().toLocaleTimeString()}`;
+            } else {
+                // Render News as a Masonry/Grid
+                let html = `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">`;
+                filteredData.forEach(item => { html += buildCard(item); });
+                html += `</div>`;
+                container.innerHTML = html;
+            }
         }
 
-        function setTab(t) {
-            currentTab = t;
-            document.getElementById('tab-pokemon').className = t === 'pokemon' ? 'pb-1 tab-active' : 'pb-1 text-gray-300 hover:text-black';
-            document.getElementById('tab-onepiece').className = t === 'one piece' ? 'pb-1 tab-active' : 'pb-1 text-gray-300 hover:text-black';
-            fetchHub();
+        function buildCard(item) {
+            const dateStr = item.published_date || item.created_at;
+            const displayDate = new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const placeholder = `https://placehold.co/400x300/f3f4f6/9ca3af?text=${item.source.replace(/ /g, '+')}`;
+            const franchiseTag = item.franchise ? `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider">${item.franchise}</span>` : '';
+
+            return `
+                <a href="${item.url}" target="_blank" class="card overflow-hidden flex flex-col h-full group">
+                    <div class="h-44 w-full bg-gray-100 overflow-hidden relative">
+                        <img src="${item.image_url || placeholder}" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                             onerror="this.src='${placeholder}'" alt="Cover">
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] font-mono text-gray-400">${displayDate}</span>
+                                ${franchiseTag}
+                            </div>
+                            <h3 class="text-sm font-semibold leading-snug line-clamp-3 text-gray-900 group-hover:text-blue-600 transition-colors">${item.title}</h3>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">${item.source}</span>
+                        </div>
+                    </div>
+                </a>
+            `;
         }
 
-        // Initial Load
+        // Initialize
         fetchHub();
-        // Refresh data every 5 minutes
-        setInterval(fetchHub, 300000);
+        setInterval(fetchHub, 300000); // Auto-refresh every 5 mins
     </script>
 </body>
 </html>
