@@ -10,7 +10,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #111827; }
         
-        /* Two-Tier Navigation Styling */
         .nav-view-btn { padding: 8px 16px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; transition: all 0.2s; border-radius: 6px; }
         .nav-view-btn:hover { color: #111827; background: #f3f4f6; }
         .nav-view-active { color: #111827; background: #f3f4f6; }
@@ -18,17 +17,13 @@
         .pill-btn { padding: 6px 16px; font-size: 12px; font-weight: 600; color: #4b5563; background: #fff; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; white-space: nowrap; cursor: pointer;}
         .pill-btn:hover { border-color: #111827; color: #111827; }
         .pill-active { background: #111827; color: #ffffff; border-color: #111827; }
-        .pill-active:hover { color: #ffffff; }
 
-        /* Card Styling */
         .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
         .card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #d1d5db; }
         
-        /* Typography */
         .vendor-header { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.1em; color: #374151; text-transform: uppercase; display: flex; items-center; margin-bottom: 16px; }
         .vendor-header::after { content: ""; flex-grow: 1; height: 1px; background: #e5e7eb; margin-left: 16px; margin-top: auto; margin-bottom: auto;}
         
-        /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -37,20 +32,20 @@
 
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6">
-            
             <div class="py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-gray-100">
                 <div class="text-center md:text-left">
                     <h1 class="text-2xl font-black tracking-tighter uppercase leading-none">SG TCG HUB</h1>
                     <p id="status" class="text-[10px] text-gray-400 font-mono mt-1 uppercase tracking-widest">Fetching Data...</p>
                 </div>
-                <nav class="flex space-x-2 bg-white rounded-lg">
+                <nav class="flex space-x-2 bg-white rounded-lg overflow-x-auto no-scrollbar">
                     <button onclick="setView('Global News')" class="nav-view-btn nav-view-active" data-view="Global News">Global Articles</button>
                     <button onclick="setView('Local Drops')" class="nav-view-btn" data-view="Local Drops">Products</button>
                     <button onclick="setView('Local News')" class="nav-view-btn" data-view="Local News">Local News</button>
+                    <button onclick="setView('Calendar')" class="nav-view-btn text-indigo-600" data-view="Calendar">🗓️ Events</button>
                 </nav>
             </div>
 
-            <div class="py-4 flex space-x-3 overflow-x-auto no-scrollbar items-center">
+            <div id="filter-bar" class="py-4 flex space-x-3 overflow-x-auto no-scrollbar items-center">
                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Filter:</span>
                 <button onclick="setFranchise('all')" class="pill-btn pill-active" data-franchise="all">All</button>
                 <button onclick="setFranchise('pokemon')" class="pill-btn" data-franchise="pokemon">Pokémon</button>
@@ -64,60 +59,161 @@
                 <button onclick="setFranchise('hololive')" class="pill-btn" data-franchise="hololive">Hololive</button>
             </div>
 
+            <div id="calendar-filters" class="py-4 hidden space-x-3 overflow-x-auto no-scrollbar items-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Show:</span>
+                <button onclick="setEventFilter('All')" class="pill-btn pill-active" data-ev="All">All Events</button>
+                <button onclick="setEventFilter('Event')" class="pill-btn" data-ev="Event">Trade Shows</button>
+                <button onclick="setEventFilter('Box Release')" class="pill-btn" data-ev="Box Release">Box Releases</button>
+                
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-4 mr-2">When:</span>
+                <button onclick="setEventMonth('All')" class="pill-btn pill-active" data-mo="All">Any Time</button>
+                <button onclick="setEventMonth('This Month')" class="pill-btn" data-mo="This Month">This Month</button>
+                <button onclick="setEventMonth('Next Month')" class="pill-btn" data-mo="Next Month">Next Month</button>
+            </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-10 min-h-screen">
-        <div id="content-container" class="space-y-12">
-            </div>
+        <div id="content-container" class="space-y-12"></div>
     </main>
 
     <script>
         const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
-        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; // Public Anon Key
+        const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7";
         const _client = supabase.createClient(S_URL, S_KEY);
 
-        // DEFAULT STATE: User enters and sees Global Articles across ALL franchises
         let currentView = 'Global News'; 
         let currentFranchise = 'all';
+        let currentEventFilter = 'All';
+        let currentEventMonth = 'All';
+        
         let allData = [];
+        let allEvents = [];
 
         async function fetchHub() {
             document.getElementById('status').innerText = 'Syncing...';
-            const { data, error } = await _client.from('TCG_NEWS').select('*').is('hidden', false).order('created_at', { ascending: false });
-            if (error) { 
-                console.error("Fetch Error:", error); 
-                document.getElementById('status').innerText = 'Connection Error';
-                return; 
+            
+            const resNews = await _client.from('TCG_NEWS').select('*').is('hidden', false).order('created_at', { ascending: false });
+            if (resNews.data) allData = resNews.data;
+
+            const resEvents = await _client.from('EVENTS').select('*').order('start_date', { ascending: true });
+            if (resEvents.data) {
+                const today = new Date().toISOString().split('T')[0];
+                allEvents = resEvents.data.filter(e => e.end_date >= today);
             }
-            allData = data;
+
             document.getElementById('status').innerText = `Live • Updated ${new Date().toLocaleTimeString()}`;
             render();
         }
 
+        // --- NAVIGATION CONTROLLERS ---
         function setView(viewName) {
             currentView = viewName;
-            document.querySelectorAll('.nav-view-btn').forEach(btn => {
-                btn.classList.toggle('nav-view-active', btn.getAttribute('data-view') === viewName);
-            });
+            document.querySelectorAll('.nav-view-btn').forEach(btn => btn.classList.toggle('nav-view-active', btn.getAttribute('data-view') === viewName));
+            
+            // Toggle which filter bar shows
+            document.getElementById('filter-bar').style.display = viewName === 'Calendar' ? 'none' : 'flex';
+            document.getElementById('calendar-filters').style.display = viewName === 'Calendar' ? 'flex' : 'none';
             render();
         }
 
         function setFranchise(franchiseName) {
             currentFranchise = franchiseName;
-            document.querySelectorAll('.pill-btn').forEach(btn => {
-                btn.classList.toggle('pill-active', btn.getAttribute('data-franchise') === franchiseName);
-            });
+            document.querySelectorAll('#filter-bar .pill-btn').forEach(btn => btn.classList.toggle('pill-active', btn.getAttribute('data-franchise') === franchiseName));
             render();
         }
 
+        function setEventFilter(type) {
+            currentEventFilter = type;
+            document.querySelectorAll('[data-ev]').forEach(btn => btn.classList.toggle('pill-active', btn.getAttribute('data-ev') === type));
+            render();
+        }
+
+        function setEventMonth(month) {
+            currentEventMonth = month;
+            document.querySelectorAll('[data-mo]').forEach(btn => btn.classList.toggle('pill-active', btn.getAttribute('data-mo') === month));
+            render();
+        }
+
+        // --- RENDER ENGINE ---
         function render() {
             const container = document.getElementById('content-container');
             container.innerHTML = '';
 
-            // 1. Filter Data by View and Franchise
+            // 1. EVENT CALENDAR RENDERING
+            if (currentView === 'Calendar') {
+                let filteredEvents = allEvents;
+                
+                if(currentEventFilter !== 'All') filteredEvents = filteredEvents.filter(e => e.event_type === currentEventFilter);
+                
+                if(currentEventMonth === 'This Month') {
+                    const thisMonth = new Date().getMonth();
+                    filteredEvents = filteredEvents.filter(e => new Date(e.start_date).getMonth() === thisMonth);
+                } else if (currentEventMonth === 'Next Month') {
+                    const nextMonth = (new Date().getMonth() + 1) % 12;
+                    filteredEvents = filteredEvents.filter(e => new Date(e.start_date).getMonth() === nextMonth);
+                }
+
+                if (filteredEvents.length === 0) {
+                    container.innerHTML = `<div class="text-center py-20 text-gray-400"><p class="text-lg font-semibold">No upcoming events found.</p></div>`;
+                    return;
+                }
+
+                let html = `<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">`;
+                filteredEvents.forEach(ev => {
+                    const sDate = new Date(ev.start_date);
+                    const eDate = new Date(ev.end_date);
+                    const month = sDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+                    const day = sDate.getDate();
+                    const isMultiDay = ev.start_date !== ev.end_date;
+                    const dateDisplay = isMultiDay ? `${day}-${eDate.getDate()}` : day;
+                    
+                    const mapQuery = encodeURIComponent(`${ev.location} ${ev.address}`);
+                    const badgeColor = ev.event_type === 'Box Release' ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-indigo-700';
+                    const imgUrl = ev.image_url || `https://placehold.co/600x400/4f46e5/ffffff?text=${ev.title.split(' ')[0]}`;
+
+                    html += `
+                        <div class="flex flex-col md:flex-row bg-white border-2 border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300">
+                            <div class="md:w-2/5 h-48 md:h-auto relative bg-gray-100">
+                                <img src="${imgUrl}" class="w-full h-full object-cover absolute inset-0">
+                            </div>
+                            
+                            <div class="md:w-3/5 flex flex-col">
+                                <div class="flex border-b border-gray-100">
+                                    <div class="bg-indigo-50 p-4 flex flex-col justify-center items-center min-w-[80px] border-r border-gray-100">
+                                        <span class="text-xs font-black text-indigo-400 uppercase">${month}</span>
+                                        <span class="text-2xl font-black text-indigo-600">${dateDisplay}</span>
+                                    </div>
+                                    <div class="p-4 flex-grow flex justify-between items-start">
+                                        <h3 class="text-md font-black leading-tight text-gray-900">${ev.title}</h3>
+                                    </div>
+                                </div>
+                                <div class="p-4 text-sm text-gray-600 space-y-2 flex-grow">
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center">🕒 ${ev.time_info || 'Time TBC'}</span>
+                                        <span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${badgeColor} whitespace-nowrap ml-2">${ev.event_type}</span>
+                                    </div>
+                                    <div class="flex items-start mt-2">
+                                        <span class="mr-2">📍</span> 
+                                        <div><span class="font-bold text-gray-800">${ev.location}</span><br><span class="text-xs">${ev.address}</span></div>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                                    <a href="https://maps.google.com/?q=${mapQuery}" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-wide flex items-center">
+                                        🗺️ Open in Google Maps &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+                return;
+            }
+
+            // 2. PRODUCTS & NEWS RENDERING
             let filteredData = allData.filter(item => item.category === currentView);
-            
             if (currentFranchise !== 'all') {
                 filteredData = filteredData.filter(item => {
                     const f = item.franchise ? item.franchise.toLowerCase() : 'others';
@@ -125,22 +221,12 @@
                 });
             }
 
-            // 2. Empty State Handling
             if (filteredData.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-20 text-gray-400">
-                        <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <p class="text-lg font-semibold">No items found.</p>
-                        <p class="text-sm">Try selecting a different franchise or view.</p>
-                    </div>`;
+                container.innerHTML = `<div class="text-center py-20 text-gray-400"><p class="text-lg font-semibold">No items found.</p></div>`;
                 return;
             }
 
-            // 3. Render Logic Based on View
             if (currentView === 'Local Drops') {
-                // Group Products by Vendor
                 const groupedVendors = {};
                 filteredData.forEach(item => {
                     const source = item.source.toUpperCase();
@@ -155,7 +241,6 @@
                     container.innerHTML += html;
                 }
             } else {
-                // Render News as a Masonry/Grid
                 let html = `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">`;
                 filteredData.forEach(item => { html += buildCard(item); });
                 html += `</div>`;
@@ -172,29 +257,21 @@
             return `
                 <a href="${item.url}" target="_blank" class="card overflow-hidden flex flex-col h-full group">
                     <div class="h-44 w-full bg-gray-100 overflow-hidden relative">
-                        <img src="${item.image_url || placeholder}" 
-                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                             onerror="this.src='${placeholder}'" alt="Cover">
+                        <img src="${item.image_url || placeholder}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='${placeholder}'">
                     </div>
                     <div class="p-4 flex flex-col flex-grow justify-between">
                         <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-mono text-gray-400">${displayDate}</span>
-                                ${franchiseTag}
-                            </div>
+                            <div class="flex justify-between items-center mb-2"><span class="text-[10px] font-mono text-gray-400">${displayDate}</span>${franchiseTag}</div>
                             <h3 class="text-sm font-semibold leading-snug line-clamp-3 text-gray-900 group-hover:text-blue-600 transition-colors">${item.title}</h3>
                         </div>
-                        <div class="mt-4 pt-3 border-t border-gray-100">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase">${item.source}</span>
-                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100"><span class="text-[10px] font-bold text-gray-400 uppercase">${item.source}</span></div>
                     </div>
                 </a>
             `;
         }
 
-        // Initialize
         fetchHub();
-        setInterval(fetchHub, 300000); // Auto-refresh every 5 mins
+        setInterval(fetchHub, 300000); 
     </script>
 </body>
 </html>
