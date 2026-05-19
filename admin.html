@@ -3,54 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HUB ADMIN</title>
+    <title>HUB ADMIN | Control Plane</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #111827; }</style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="pb-20">
 
     <div id="login-screen" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 border border-gray-200 shadow-sm w-96">
-            <h1 class="text-xl font-black uppercase mb-6 border-b-2 border-black inline-block pb-1">Admin Login</h1>
-            <input type="email" id="email" placeholder="Admin Email" class="w-full mb-4 p-2 border bg-gray-50 text-sm">
-            <input type="password" id="password" placeholder="Password" class="w-full mb-6 p-2 border bg-gray-50 text-sm">
-            <button onclick="login()" class="w-full bg-black text-white font-bold uppercase text-xs py-3 hover:bg-gray-800">Login</button>
-            <p id="login-error" class="text-red-500 text-xs mt-4 hidden"></p>
+        <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm w-96">
+            <h1 class="text-xl font-black uppercase mb-6 text-center text-gray-800">Admin Login</h1>
+            <input type="email" id="email" placeholder="Admin Email" class="w-full mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:border-indigo-500">
+            <input type="password" id="password" placeholder="Password" class="w-full mb-6 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:border-indigo-500">
+            <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold uppercase text-xs py-3 rounded-lg hover:bg-indigo-700 transition-colors">Login</button>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden text-center"></p>
         </div>
     </div>
 
-    <div id="dashboard" class="hidden max-w-6xl mx-auto px-6 py-12">
-        <div class="flex justify-between items-center mb-12">
-            <h1 class="text-2xl font-black uppercase tracking-tighter">TCG Hub Control</h1>
-            <button onclick="logout()" class="text-xs font-bold text-gray-500 hover:text-black uppercase">Logout</button>
+    <div id="dashboard" class="hidden max-w-7xl mx-auto px-6 py-10">
+        
+        <div class="flex justify-between items-center mb-10 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h1 class="text-2xl font-black uppercase tracking-tighter text-indigo-900">TCG Hub Control Plane</h1>
+            <div class="flex items-center gap-4">
+                <span id="upload-status" class="text-xs font-bold text-indigo-600 uppercase tracking-widest hidden animate-pulse">Processing...</span>
+                <button onclick="logout()" class="text-xs font-bold text-gray-500 hover:text-black uppercase px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">Logout</button>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-indigo-800 mb-4">🌐 Manage Web Scrapers</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <input type="text" id="ws-name" placeholder="Source Name" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <select id="ws-type" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                            <option value="Shopify">Shopify Feed</option>
+                            <option value="Dynamic">Dynamic News</option>
+                            <option value="RSS">RSS Feed (Google Alerts)</option>
+                        </select>
+                        <input type="text" id="ws-url" placeholder="URL" class="p-2 border text-xs col-span-2 bg-gray-50 rounded-lg">
+                        <input type="text" id="ws-css" placeholder="CSS Selector (If Dynamic)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <select id="ws-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                            <option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option>
+                        </select>
+                        <select id="ws-category" class="p-2 border text-xs bg-gray-50 rounded-lg text-indigo-700 font-bold">
+                            <option value="Global News">Route: Global News</option>
+                            <option value="Local News">Route: Local News</option>
+                            <option value="Local Drops">Route: Local Drops</option>
+                        </select>
+                        <button onclick="addWebSource()" class="bg-indigo-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-indigo-700 col-span-2 rounded-lg">Add Web Source</button>
+                    </div>
+                    <div id="web-source-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
+                </div>
+                
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-indigo-800 mb-4">📱 Manage Telegram Scrapers</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <input type="text" id="ts-handle" placeholder="Channel Handle (e.g. mugitcg)" class="p-2 border text-xs col-span-2 bg-gray-50 rounded-lg">
+                        <input type="number" id="ts-topic" placeholder="Topic ID (Leave blank if none)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <select id="ts-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                            <option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option>
+                        </select>
+                        <button onclick="addTelegramSource()" class="bg-indigo-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-indigo-700 col-span-2 rounded-lg">Add Telegram Source</button>
+                    </div>
+                    <div id="tg-source-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
+                </div>
+                
+                <div class="lg:col-span-2 border-t border-gray-100 pt-6 mt-2">
+                    <h2 class="text-xs font-black uppercase tracking-widest text-orange-600 mb-4">👾 Manage Reddit Scrapers</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                        <input type="text" id="rs-sub" placeholder="Subreddit (e.g. PokemonTCG)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <input type="text" id="rs-kw" placeholder="Keyword (Optional)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <input type="number" id="rs-upvotes" placeholder="Min Upvotes (e.g. 5)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <select id="rs-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                            <option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option>
+                        </select>
+                        <select id="rs-category" class="p-2 border text-xs bg-gray-50 rounded-lg text-orange-700 font-bold">
+                            <option value="Global News">Route: Global News</option>
+                            <option value="Local News">Route: Local News</option>
+                            <option value="Local Drops">Route: Local Drops</option>
+                        </select>
+                        <button onclick="addRedditSource()" class="bg-orange-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-orange-700 col-span-2 md:col-span-5 rounded-lg">Add Reddit Source</button>
+                    </div>
+                    <div id="reddit-source-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-emerald-600 mb-4">🖼️ Vendor Banners (Shopify/Telegram)</h2>
+                    <div class="flex space-x-2 mb-4">
+                        <input type="text" id="v-name" placeholder="Exact Source Name" class="p-2 border text-xs w-1/3 bg-gray-50 rounded-lg">
+                        <input type="file" id="v-logo" accept="image/*" class="p-1.5 border text-xs w-2/3 bg-gray-50 rounded-lg">
+                        <button onclick="addVendor()" class="bg-emerald-500 text-white px-4 text-xs font-bold uppercase hover:bg-emerald-600 rounded-lg">Upload</button>
+                    </div>
+                    <div id="vendor-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
+                </div>
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-emerald-600 mb-4">🖼️ Default Event Logos</h2>
+                    <div class="flex space-x-2 mb-4">
+                        <input type="text" id="ce-kw" placeholder="Keyword (e.g. sccs)" class="p-2 border text-xs w-1/3 bg-gray-50 rounded-lg">
+                        <input type="file" id="ce-logo" accept="image/*" class="p-1.5 border text-xs w-2/3 bg-gray-50 rounded-lg">
+                        <button onclick="addCommonEvent()" class="bg-emerald-500 text-white px-4 text-xs font-bold uppercase hover:bg-emerald-600 rounded-lg">Upload</button>
+                    </div>
+                    <div id="ce-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                <h2 class="text-xs font-black uppercase tracking-widest text-blue-600 mb-6">🗓️ Add Manual Event / Box Release</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <input type="text" id="ev-title" placeholder="Event/Box Title" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                    <select id="ev-type" class="p-2 border text-xs bg-gray-50 rounded-lg"><option value="Event">Offline Event</option><option value="Box Release">Box Release</option></select>
+                    <input type="date" id="ev-start" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                    <input type="date" id="ev-end" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                    <input type="text" id="ev-loc" placeholder="Location Name" class="p-2 border text-xs lg:col-span-2 bg-gray-50 rounded-lg">
+                    <input type="text" id="ev-add" placeholder="Full Address" class="p-2 border text-xs lg:col-span-2 bg-gray-50 rounded-lg">
+                    <input type="text" id="ev-time" placeholder="Time Details" class="p-2 border text-xs lg:col-span-2 bg-gray-50 rounded-lg">
+                    <input type="file" id="ev-img" accept="image/*" class="p-1.5 border text-xs lg:col-span-2 bg-gray-50 rounded-lg">
+                    <button onclick="addEvent()" class="bg-blue-600 text-white font-bold uppercase text-[10px] py-3 lg:col-span-4 hover:bg-blue-700 rounded-lg">Publish Event</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                    <h2 class="text-xs font-black uppercase tracking-widest mb-4">Routing Keywords</h2>
+                    <div class="flex space-x-2 mb-4">
+                        <select id="kw-franchise" class="p-2 border text-xs w-1/3 bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="union arena">Union Arena</option><option value="dbz">DBZ</option><option value="gundam">Gundam</option><option value="riftbound">Riftbound</option><option value="yu-gi-oh">Yu-Gi-Oh</option><option value="digimon">Digimon</option><option value="hololive">Hololive</option><option value="others">Others</option></select>
+                        <input type="text" id="kw-text" placeholder="Keyword (e.g. ETB)" class="p-2 border text-xs w-2/3 bg-gray-50 rounded-lg">
+                        <button onclick="addRoutingKeyword()" class="bg-gray-800 text-white px-4 text-xs font-bold uppercase rounded-lg hover:bg-black">Add</button>
+                    </div>
+                    <div id="routing-grid" class="flex flex-wrap gap-2 mt-4"></div>
+                </div>
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                    <h2 class="text-xs font-black uppercase text-red-600 tracking-widest mb-4">Ignore/Block Keywords</h2>
+                    <div class="flex space-x-2 mb-4">
+                        <input type="text" id="ig-text" placeholder="Keyword" class="p-2 border text-xs w-full bg-gray-50 rounded-lg">
+                        <button onclick="addIgnoreKeyword()" class="bg-red-500 text-white px-4 text-xs font-bold uppercase rounded-lg hover:bg-red-600">Block</button>
+                    </div>
+                    <div id="ignore-grid" class="flex flex-wrap gap-2 mt-4"></div>
+                </div>
+            </div>
+
             <div class="lg:col-span-1">
-                <div class="bg-white p-6 border border-gray-200 sticky top-6">
-                    <h2 class="text-xs font-black uppercase tracking-widest mb-6">Add Manual Post</h2>
-                    <input type="text" id="m-title" placeholder="Title" class="w-full mb-3 p-2 border text-xs">
-                    <input type="text" id="m-url" placeholder="Destination URL" class="w-full mb-3 p-2 border text-xs">
-                    <input type="text" id="m-source" placeholder="Source Name (e.g. Official)" class="w-full mb-3 p-2 border text-xs">
-					<select id="m-category" class="w-full mb-3 p-2 border text-xs">
-						<option value="Global News">Global News</option>
-						<option value="Local Drops">Local Drops</option>
-					</select>
-					<select id="m-franchise" class="w-full mb-3 p-2 border text-xs">
-						<option value="pokemon">Pokémon</option>
-						<option value="one piece">One Piece</option>
-					</select>
-					<input type="text" id="m-img" placeholder="Image URL (Optional)" class="w-full mb-6 p-2 border text-xs">
-                    <button onclick="addPost()" class="w-full bg-black text-white font-bold uppercase text-[10px] py-3">Publish Post</button>
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm sticky top-6">
+                    <h2 class="text-xs font-black uppercase tracking-widest mb-6">Add Manual Scrape Post</h2>
+                    <input type="text" id="m-title" placeholder="Title" class="w-full mb-3 p-2 border text-xs bg-gray-50 rounded-lg">
+                    <input type="text" id="m-url" placeholder="Destination URL" class="w-full mb-3 p-2 border text-xs bg-gray-50 rounded-lg">
+                    <input type="text" id="m-source" placeholder="Source Name" class="w-full mb-3 p-2 border text-xs bg-gray-50 rounded-lg">
+                    <select id="m-category" class="w-full mb-3 p-2 border text-xs bg-gray-50 rounded-lg"><option value="Global News">Global News</option><option value="Local News">Local News</option><option value="Local Drops">Local Drops</option></select>
+                    <select id="m-franchise" class="w-full mb-3 p-2 border text-xs bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option></select>
+                    <input type="file" id="m-img" accept="image/*" class="w-full mb-6 p-1.5 border text-xs bg-gray-50 rounded-lg">
+                    <button onclick="addPost()" class="w-full bg-gray-800 text-white font-bold uppercase text-[10px] py-3 rounded-lg hover:bg-black">Publish Post</button>
                 </div>
             </div>
 
             <div class="lg:col-span-2">
-                <h2 class="text-xs font-black uppercase tracking-widest mb-6">Manage Scraped Posts</h2>
-                <div id="admin-grid" class="space-y-3">
-                    </div>
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm mb-8">
+                    <h2 class="text-xs font-black uppercase tracking-widest mb-6">Manage Scraped Posts</h2>
+                    <div id="admin-grid" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
+                </div>
+                
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                    <h2 class="text-xs font-black uppercase tracking-widest text-indigo-800 mb-6">Manage Events (Manual Override)</h2>
+                    <div id="event-grid" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -60,92 +179,96 @@
         const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; 
         const _client = supabase.createClient(S_URL, S_KEY);
 
-        // --- AUTH LOGIC ---
-        async function checkSession() {
-            const { data: { session } } = await _client.auth.getSession();
-            if (session) showDashboard();
-        }
-
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const { error } = await _client.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                document.getElementById('login-error').innerText = error.message;
-                document.getElementById('login-error').classList.remove('hidden');
-            } else {
-                showDashboard();
-            }
-        }
-
-        async function logout() {
-            await _client.auth.signOut();
-            location.reload();
-        }
+        // --- AUTHENTICATION ---
+        async function checkSession() { const { data: { session } } = await _client.auth.getSession(); if (session) showDashboard(); }
+        async function login() { const email = document.getElementById('email').value; const password = document.getElementById('password').value; const { error } = await _client.auth.signInWithPassword({ email, password }); if (error) { document.getElementById('login-error').innerText = error.message; document.getElementById('login-error').classList.remove('hidden'); } else { showDashboard(); } }
+        async function logout() { await _client.auth.signOut(); location.reload(); }
 
         function showDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
-            loadAdminData();
+            loadAdminData(); loadKeywords(); loadAssets(); loadEventsAdmin(); loadSources();
         }
 
-        // --- DATA LOGIC ---
-// --- UPDATED JAVASCRIPT FOR ADMIN ---
-		async function loadAdminData() {
-			const { data, error } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(50);
-			if (error) return;
-			
-			const grid = document.getElementById('admin-grid');
-			grid.innerHTML = '';
+        // --- UNIVERSAL IMAGE UPLOADER ---
+        async function uploadImageToSupabase(fileInputId, folderName) {
+            const fileInput = document.getElementById(fileInputId);
+            const file = fileInput.files[0];
+            if (!file) return null; 
+            
+            const fileExt = file.name.split('.').pop();
+            const uniqueFileName = `${folderName}/${Date.now()}.${fileExt}`;
+            
+            document.getElementById('upload-status').classList.remove('hidden');
+            const { data, error } = await _client.storage.from('images').upload(uniqueFileName, file, { cacheControl: '3600', upsert: false });
+            document.getElementById('upload-status').classList.add('hidden');
 
-			data.forEach(item => {
-				const isHidden = item.hidden;
-				const franchiseColor = item.franchise === 'pokemon' ? 'text-blue-600' : 'text-red-600';
-				
-				const row = `
-					<div class="bg-white border ${isHidden ? 'border-red-300 bg-red-50' : 'border-gray-200'} p-4 flex justify-between items-center">
-						<div>
-							<span class="text-[9px] font-black uppercase text-gray-400 block mb-1">
-								${item.source} | ${item.category} | <span class="${franchiseColor}">${item.franchise || 'UNASSIGNED'}</span>
-							</span>
-							<h3 class="text-sm font-semibold ${isHidden ? 'line-through text-gray-500' : ''}">${item.title}</h3>
-						</div>
-						<div class="flex space-x-2">
-							<button onclick="toggleFranchise('${item.url}', '${item.franchise}')" class="px-3 py-2 text-[9px] font-bold uppercase bg-gray-100 hover:bg-gray-200">
-								Swap Franchise
-							</button>
-							<button onclick="toggleVisibility('${item.url}', ${isHidden})" class="px-4 py-2 text-[10px] font-bold uppercase ${isHidden ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'}">
-								${isHidden ? 'Unhide' : 'Hide'}
-							</button>
-						</div>
-					</div>
-				`;
-				grid.innerHTML += row;
-			});
-		}
+            if (error) { alert("Upload failed: " + error.message); return null; }
+            const { data: publicUrlData } = _client.storage.from('images').getPublicUrl(uniqueFileName);
+            return publicUrlData.publicUrl;
+        }
 
-		// NEW: Toggle Franchise Function
-		async function toggleFranchise(url, currentFranchise) {
-			const newFranchise = currentFranchise === 'pokemon' ? 'one piece' : 'pokemon';
-			await _client.from('TCG_NEWS').update({ franchise: newFranchise }).eq('url', url);
-			loadAdminData(); // Refresh
-		}
+        // --- SCRAPER CONTROL PLANE ---
+        async function loadSources() {
+            const { data: wData } = await _client.from('SCRAPE_SOURCES_WEB').select('*').order('source_name');
+            const wGrid = document.getElementById('web-source-grid'); wGrid.innerHTML = '';
+            if(wData) wData.forEach(item => { wGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.source_name}</b> <span class="text-gray-400">(${item.scrape_type})</span><br><span class="text-blue-500 truncate w-40 inline-block">${item.url}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_WEB', ${item.id}, '${item.source_name}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
 
-		// UPDATED: Add Post Function
-		async function addPost() {
-			const post = {
-				title: document.getElementById('m-title').value,
-				url: document.getElementById('m-url').value,
-				source: document.getElementById('m-source').value,
-				category: document.getElementById('m-category').value,
-				franchise: document.getElementById('m-franchise').value, // Grabs franchise
-				image_url: document.getElementById('m-img').value || null,
-				hidden: false
-			};
-			const { error } = await _client.from('TCG_NEWS').upsert(post, { onConflict: 'url' });
-			if (!error) { alert("Post Added!"); loadAdminData(); }
-		}
+            const { data: tData } = await _client.from('SCRAPE_SOURCES_TELEGRAM').select('*').order('channel_handle');
+            const tGrid = document.getElementById('tg-source-grid'); tGrid.innerHTML = '';
+            if(tData) tData.forEach(item => { tGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.channel_handle}</b><br><span class="text-gray-500">Topic: ${item.topic_id || 'Main Channel'}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_TELEGRAM', ${item.id}, '${item.channel_handle}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
+            
+            const { data: rdData } = await _client.from('SCRAPE_SOURCES_REDDIT').select('*').order('subreddit');
+            const rdGrid = document.getElementById('reddit-source-grid'); rdGrid.innerHTML = '';
+            if(rdData) rdData.forEach(item => { rdGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>r/${item.subreddit}</b><br><span class="text-gray-500">Search: "${item.keyword || 'ALL'}" | Min ⬆️: ${item.min_upvotes}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_REDDIT', ${item.id}, 'r/${item.subreddit}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
+        }
+        async function addWebSource() { const data = { source_name: document.getElementById('ws-name').value, url: document.getElementById('ws-url').value, scrape_type: document.getElementById('ws-type').value, css_selector: document.getElementById('ws-css').value || null, default_franchise: document.getElementById('ws-franchise').value, default_category: document.getElementById('ws-category').value }; if(!data.source_name || !data.url) return alert("Name and URL required!"); await _client.from('SCRAPE_SOURCES_WEB').insert([data]); loadSources(); }
+        async function addTelegramSource() { const data = { channel_handle: document.getElementById('ts-handle').value, topic_id: document.getElementById('ts-topic').value || null, default_franchise: document.getElementById('ts-franchise').value }; if(!data.channel_handle) return alert("Channel Handle required!"); await _client.from('SCRAPE_SOURCES_TELEGRAM').insert([data]); loadSources(); }
+        async function addRedditSource() { 
+            const data = { subreddit: document.getElementById('rs-sub').value.replace('r/', ''), keyword: document.getElementById('rs-kw').value.trim() || null, min_upvotes: parseInt(document.getElementById('rs-upvotes').value) || 5, default_franchise: document.getElementById('rs-franchise').value, default_category: document.getElementById('rs-category').value }; 
+            if(!data.subreddit) return alert("Subreddit is required!"); 
+            await _client.from('SCRAPE_SOURCES_REDDIT').insert([data]); loadSources(); 
+        }
+        async function deleteSource(table, id, identifier) { 
+            if(!confirm(`WARNING: This will delete the source AND permanently purge all existing posts from "${identifier}" in the database. Continue?`)) return;
+            await _client.from(table).delete().eq('id', id); 
+            let matchString = identifier;
+            if (table === 'SCRAPE_SOURCES_TELEGRAM') matchString = `Telegram: ${identifier}`;
+            if (table === 'SCRAPE_SOURCES_REDDIT') matchString = `Reddit: ${identifier}`;
+            await _client.from('TCG_NEWS').delete().eq('source', matchString);
+            alert(`Purged all records for ${identifier}.`);
+            loadSources(); loadAdminData();
+        }
+
+        // --- ASSET MANAGER ---
+        async function loadAssets() {
+            const { data: vData } = await _client.from('VENDORS').select('*');
+            const vGrid = document.getElementById('vendor-grid'); vGrid.innerHTML = '';
+            if(vData) vData.forEach(item => { vGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><span><b>${item.name}</b> <br> <a href="${item.logo_url}" target="_blank" class="text-blue-500 hover:underline">View Banner</a></span> <button onclick="deleteAsset('VENDORS', ${item.id})" class="text-red-500 font-bold ml-4 hover:underline">Delete</button></div>`; });
+
+            const { data: cData } = await _client.from('COMMON_EVENTS').select('*');
+            const cGrid = document.getElementById('ce-grid'); cGrid.innerHTML = '';
+            if(cData) cData.forEach(item => { cGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><span><b>${item.keyword}</b> <br> <a href="${item.logo_url}" target="_blank" class="text-blue-500 hover:underline">View Logo</a></span> <button onclick="deleteAsset('COMMON_EVENTS', ${item.id})" class="text-red-500 font-bold ml-4 hover:underline">Delete</button></div>`; });
+        }
+        async function addVendor() { const imgUrl = await uploadImageToSupabase('v-logo', 'vendors'); if(!imgUrl) return alert("Please select an image!"); await _client.from('VENDORS').insert([{ name: document.getElementById('v-name').value.trim(), logo_url: imgUrl }]); document.getElementById('v-name').value=''; document.getElementById('v-logo').value=''; loadAssets(); }
+        async function addCommonEvent() { const imgUrl = await uploadImageToSupabase('ce-logo', 'events'); if(!imgUrl) return alert("Please select an image!"); await _client.from('COMMON_EVENTS').insert([{ keyword: document.getElementById('ce-kw').value.toLowerCase().trim(), logo_url: imgUrl }]); document.getElementById('ce-kw').value=''; document.getElementById('ce-logo').value=''; loadAssets(); }
+        async function deleteAsset(table, id) { await _client.from(table).delete().eq('id', id); loadAssets(); }
+
+        // --- EVENT MANAGER ---
+        async function addEvent() { const imgUrl = await uploadImageToSupabase('ev-img', 'events'); const eventData = { title: document.getElementById('ev-title').value, event_type: document.getElementById('ev-type').value, start_date: document.getElementById('ev-start').value, end_date: document.getElementById('ev-end').value || document.getElementById('ev-start').value, location: document.getElementById('ev-loc').value, address: document.getElementById('ev-add').value, time_info: document.getElementById('ev-time').value, image_url: imgUrl }; if(!eventData.title || !eventData.start_date) return alert("Title and Start Date required!"); await _client.from('EVENTS').insert([eventData]); alert("Added!"); document.getElementById('ev-title').value = ''; document.getElementById('ev-img').value = ''; loadEventsAdmin(); }
+        async function loadEventsAdmin() { const { data } = await _client.from('EVENTS').select('*').order('start_date', { ascending: false }).limit(20); const grid = document.getElementById('event-grid'); grid.innerHTML = ''; if(data) data.forEach(item => { grid.innerHTML += `<div class="bg-gray-50 border border-gray-100 rounded-lg p-3 flex justify-between items-center"><div><span class="text-[9px] font-black uppercase text-gray-400 block mb-1">${item.start_date} | ${item.event_type}</span><h3 class="text-sm font-semibold">${item.title}</h3><p class="text-[9px] text-blue-500 mt-1 truncate w-64">${item.image_url || 'No Image'}</p></div><button onclick="overrideEventImage(${item.id})" class="px-3 py-1.5 text-[9px] font-bold uppercase bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded">Change URL</button></div>`; }); }
+        async function overrideEventImage(id) { const newUrl = prompt("Enter the new Image URL:"); if(newUrl !== null) { await _client.from('EVENTS').update({ image_url: newUrl }).eq('id', id); loadEventsAdmin(); } }
+        
+        // --- KEYWORD ENGINE ---
+        async function loadKeywords() { const { data: rData } = await _client.from('ROUTING_KEYWORDS').select('*').order('franchise'); const rGrid = document.getElementById('routing-grid'); rGrid.innerHTML = ''; if(rData) rData.forEach(item => { rGrid.innerHTML += `<span class="bg-gray-100 text-[10px] px-2.5 py-1 font-mono flex items-center rounded-lg border border-gray-200"><b class="mr-1">${item.franchise.toUpperCase()}:</b> ${item.keyword} <button onclick="deleteKeyword('ROUTING_KEYWORDS', ${item.id})" class="ml-2 text-red-500 hover:font-bold">&times;</button></span>`; }); const { data: iData } = await _client.from('IGNORE_KEYWORDS').select('*'); const iGrid = document.getElementById('ignore-grid'); iGrid.innerHTML = ''; if(iData) iData.forEach(item => { iGrid.innerHTML += `<span class="bg-red-50 text-red-700 text-[10px] px-2.5 py-1 font-mono flex items-center rounded-lg border border-red-200">${item.keyword} <button onclick="deleteKeyword('IGNORE_KEYWORDS', ${item.id})" class="ml-2 hover:font-bold">&times;</button></span>`; }); }
+        async function addRoutingKeyword() { await _client.from('ROUTING_KEYWORDS').insert([{ franchise: document.getElementById('kw-franchise').value, keyword: document.getElementById('kw-text').value.toLowerCase().trim() }]); document.getElementById('kw-text').value=''; loadKeywords(); }
+        async function addIgnoreKeyword() { await _client.from('IGNORE_KEYWORDS').insert([{ keyword: document.getElementById('ig-text').value.toLowerCase().trim() }]); document.getElementById('ig-text').value=''; loadKeywords(); }
+        async function deleteKeyword(table, id) { await _client.from(table).delete().eq('id', id); loadKeywords(); }
+        
+        // --- POST MANAGEMENT ---
+        async function loadAdminData() { const { data } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(50); const grid = document.getElementById('admin-grid'); grid.innerHTML = ''; if(data) data.forEach(item => { const isHidden = item.hidden; grid.innerHTML += `<div class="bg-gray-50 rounded-lg border ${isHidden ? 'border-red-300 bg-red-50/50' : 'border-gray-100'} p-3 flex justify-between items-center"><div><span class="text-[9px] font-black uppercase text-gray-400 block mb-1">${item.source} | ${item.category}</span><h3 class="text-sm font-semibold ${isHidden ? 'line-through text-gray-500' : ''}">${item.title}</h3></div><button onclick="toggleVisibility('${item.url}', ${isHidden})" class="px-3 py-1.5 text-[9px] font-bold uppercase rounded ${isHidden ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}">${isHidden ? 'Unhide' : 'Hide'}</button></div>`; }); }
+        async function toggleVisibility(url, currentState) { await _client.from('TCG_NEWS').update({ hidden: !currentState }).eq('url', url); loadAdminData(); }
+        async function addPost() { const imgUrl = await uploadImageToSupabase('m-img', 'scraped'); const post = { title: document.getElementById('m-title').value, url: document.getElementById('m-url').value, source: document.getElementById('m-source').value, category: document.getElementById('m-category').value, franchise: document.getElementById('m-franchise').value, image_url: imgUrl, hidden: false }; await _client.from('TCG_NEWS').upsert(post, { onConflict: 'url' }); alert("Post Added!"); document.getElementById('m-title').value = ''; document.getElementById('m-url').value = ''; document.getElementById('m-img').value = ''; loadAdminData(); }
 
         checkSession();
     </script>
