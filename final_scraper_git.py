@@ -10,9 +10,6 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 from supabase import create_client, Client
 
-# ==========================================
-#          BLOCK: SETUP & MEMORY
-# ==========================================
 # --- 1. SETUP ---
 import os
 
@@ -22,17 +19,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-# --- 2. DYNAMIC UTILITIES, ROUTERS & EXCLUDERS ---
-ROUTING_RULES = {}
-IGNORE_RULES = []
-
 PROCESSED_URLS = set()
 PROCESSED_TITLES = set()
 
-
-# ==========================================
-#          BLOCK: CORE UTILITIES
-# ==========================================
 def normalize_url(url):
     try:
         parsed = urlparse(url)
@@ -40,18 +29,15 @@ def normalize_url(url):
     except Exception: return url
 
 def get_base_domain(url):
-    """Extracts just the https://website.com part of a URL"""
     try:
         parts = url.split('/')
         return f"{parts[0]}//{parts[2]}"
     except: return url
 
 def make_absolute_url(image_url, source_url):
-    """Glues the domain name to broken relative image paths"""
     if not image_url: return None
     if image_url.startswith('http'): return image_url
     if image_url.startswith('//'): return 'https:' + image_url
-    
     base_domain = get_base_domain(source_url)
     if image_url.startswith('/'): return base_domain + image_url
     return base_domain + '/' + image_url
@@ -105,35 +91,35 @@ def is_duplicate(title, url):
     PROCESSED_TITLES.add(title.lower())
     return False
 
-
 # ==========================================
 #          BLOCK: PIPELINE - REDDIT
 # ==========================================
-def scrape_reddit(subreddit, keyword, min_upvotes, default_franchise, default_category):
-    print(f"--- [REDDIT SCAN] r/{subreddit} (Keyword: {keyword or 'ALL'}) ---")
+def scrape_reddit(subreddit, keyword, default_franchise):
+    print(f"--- [REDDIT CLEAN SLATE] r/{subreddit} (Keyword: {keyword or 'ALL'}) ---")
+    source_tag = f"Reddit: r/{subreddit}"
     
-    # UPGRADE: Fetch 50 items instead of 10 to grab historical data
-    if keyword: url = f"https://www.reddit.com/r/{subreddit}/search.json?q={keyword}&restrict_sr=on&sort=new&limit=50"
-    else: url = f"https://www.reddit.com/r/{subreddit}/new.json?limit=50"
+    if keyword: 
+        url = f"https://www.reddit.com/r/{subreddit}/search.json?q={keyword}&restrict_sr=on&sort=top&t=month&limit=100"
+    else: 
+        url = f"https://www.reddit.com/r/{subreddit}/top.json?t=month&limit=100"
     
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
         if r.status_code == 200:
-            posts = r.json().get('data', {}).get('children', [])[:50]
+            posts = r.json().get('data', {}).get('children', [])
+            valid_posts = []
             
             for post in posts:
+                if len(valid_posts) >= 15: break
+                    
                 post_data = post['data']
                 title = post_data['title']
                 upvotes = post_data['ups']
                 
-                if upvotes < min_upvotes or is_excluded(title): continue
+                if is_excluded(title): continue
 
                 link = f"https://www.reddit.com{post_data['permalink']}"
                 if is_duplicate(title, link): continue
-                
-                # UPGRADE: Hold data for 90 days instead of 14 days
-                post_date = datetime.fromtimestamp(post_data['created_utc'], tz=timezone.utc)
-                if post_date < datetime.now(timezone.utc) - timedelta(days=90): continue
 
                 raw_image_url = post_data.get('url_overridden_by_dest')
                 if not raw_image_url or not any(ext in raw_image_url.lower() for ext in ['.jpg', '.png', '.jpeg', '.webp']):
@@ -143,21 +129,33 @@ def scrape_reddit(subreddit, keyword, min_upvotes, default_franchise, default_ca
                         raw_image_url = post_data['thumbnail']
                     else: raw_image_url = None
 
+                if not raw_image_url: continue
+
                 secure_image_url = rehost_image(raw_image_url, folder="reddit") if raw_image_url else None
+                if not secure_image_url: continue
+
                 actual_franchises = determine_franchises(title, default_franchise)
                 
-                assigned_category = default_category
-                if assigned_category == "Global News" and re.search(r'\b(sg|singapore)\b', title.lower()): assigned_category = "Local News"
+                # HARDCODED: Completely ignores the "SG" smart router. ALL Reddit posts go to this category.
+                assigned_category = "Top Reddit Posts"
                     
                 db_data = {
-                    "title": title[:180], "url": link, "source": f"Reddit: r/{subreddit}", 
+                    "title": title[:180], "url": link, "source": source_tag, 
                     "category": assigned_category, "franchise": actual_franchises,
-                    "image_url": secure_image_url, "published_date": post_date.isoformat()
+                    "image_url": secure_image_url, "published_date": datetime.now().isoformat()
                 }
-                supabase.table("TCG_NEWS").upsert(db_data, on_conflict="url").execute()
-                print(f"Sync: {title[:30]}... [⬆️ {upvotes}] [{actual_franchises.upper()}] -> {assigned_category}")
-    except Exception as e: print(f"Reddit Error: {e}")
+                valid_posts.append((db_data, upvotes, actual_franchises))
 
+            if valid_posts:
+                print(f"  -> Found {len(valid_posts)} valid image posts. Purging old subreddit data...")
+                supabase.table("TCG_NEWS").delete().eq("source", source_tag).eq("is_featured", False).execute()
+                
+                for db_data, upvotes, fr in valid_posts:
+                    supabase.table("TCG_NEWS").upsert(db_data, on_conflict="url").execute()
+                    print(f"Sync: {db_data['title'][:30]}... [⬆️ {upvotes}] [{fr.upper()}] -> {db_data['category']}")
+        else:
+            print(f"  -> Reddit API blocked request. Status: {r.status_code}")
+    except Exception as e: print(f"Reddit Error: {e}")
 
 # ==========================================
 #          BLOCK: PIPELINE - RSS / GOOGLE
@@ -169,7 +167,6 @@ def scrape_rss_feed(url, source, default_franchise, default_category):
         soup = BeautifulSoup(r.content, "xml")
         entries = soup.find_all("entry") or soup.find_all("item")
         
-        # UPGRADE: Process up to 50 RSS items
         for entry in entries[:50]:
             title_node = entry.find("title")
             title = BeautifulSoup(title_node.text, "html.parser").text if title_node else ""
@@ -189,10 +186,9 @@ def scrape_rss_feed(url, source, default_franchise, default_category):
                 if img_tag: raw_image_url = img_tag.get("src")
 
             try:
-                if pub_date_text and date_parser.parse(pub_date_text, fuzzy=True) < datetime.now(timezone.utc) - timedelta(days=90): continue
+                if pub_date_text and date_parser.parse(pub_date_text, fuzzy=True) < datetime.now(timezone.utc) - timedelta(days=60): continue
             except: pass
 
-            # UPGRADE: Fix absolute URLs before downloading
             raw_image_url = make_absolute_url(raw_image_url, url)
             actual_franchises = determine_franchises(title, default_franchise)
             secure_image_url = rehost_image(raw_image_url, folder="news") if raw_image_url else None
@@ -206,9 +202,8 @@ def scrape_rss_feed(url, source, default_franchise, default_category):
                 "image_url": secure_image_url, "published_date": pub_date_text
             }
             supabase.table("TCG_NEWS").upsert(data, on_conflict="url").execute()
-            print(f"Sync: {title[:40]}... [{actual_franchises.upper()}] -> {assigned_category}")
+            print(f"Sync: {title[:40]}... [{actual_franchises.upper()}]")
     except Exception as e: print(f"RSS Error ({source}): {e}")
-
 
 # ==========================================
 #          BLOCK: PIPELINE - SHOPIFY
@@ -233,7 +228,6 @@ def scrape_shopify_feed(url, source, default_franchise, default_category):
                 img_tag = BeautifulSoup(summary_html, "html.parser").find("img")
                 if img_tag: raw_image_url = img_tag.get("src")
 
-            # UPGRADE: Fix absolute URLs before downloading
             raw_image_url = make_absolute_url(raw_image_url, url)
             actual_franchises = determine_franchises(title, default_franchise)
             secure_image_url = rehost_image(raw_image_url, folder="shopify") if raw_image_url else None
@@ -247,7 +241,6 @@ def scrape_shopify_feed(url, source, default_franchise, default_category):
             print(f"Sync: {title[:40]}... [{actual_franchises.upper()}]")
     except Exception as e: print(f"Feed Error ({source}): {e}")
 
-
 # ==========================================
 #          BLOCK: PIPELINE - PLAYWRIGHT
 # ==========================================
@@ -257,7 +250,12 @@ async def scrape_news_dynamic(browser, url, source, selector, default_franchise,
     await Stealth().apply_stealth_async(page)
     
     try:
-        await page.goto(url, wait_until="networkidle", timeout=60000)
+        await page.goto(url, timeout=60000)
+        try:
+            await page.wait_for_selector(selector, timeout=15000)
+        except Exception:
+            print(f"  -> Warning: CSS Selector '{selector}' took too long to appear. Attempting to parse anyway...")
+
         for btn_text in ["Accept", "Allow", "Close", "Agree"]:
             try:
                 btn = page.get_by_role("button", name=btn_text).first
@@ -265,7 +263,7 @@ async def scrape_news_dynamic(browser, url, source, selector, default_franchise,
             except: pass
 
         await page.evaluate("window.scrollTo(0, 800)")
-        await page.wait_for_timeout(5000) 
+        await page.wait_for_timeout(3000) 
         
         items = await page.query_selector_all(selector)
         for item in items[:20]:
@@ -275,10 +273,19 @@ async def scrape_news_dynamic(browser, url, source, selector, default_franchise,
             
             if link_el:
                 title = (await headline_el.inner_text()).strip() if headline_el else ""
+                
+                if title and re.search(r'(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}', title, re.IGNORECASE):
+                    title = ""
+                
                 if len(title) < 10: 
                     lines = (await item.inner_text()).split('\n')
                     for line in lines:
-                        if len(line.strip()) > 10 and "Learn More" not in line: title = line.strip(); break
+                        clean_line = line.strip()
+                        if re.search(r'(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}', clean_line, re.IGNORECASE):
+                            continue
+                        if len(clean_line) > 10 and "Learn More" not in clean_line: 
+                            title = clean_line
+                            break
                 
                 if not title or is_excluded(title): continue
 
@@ -287,8 +294,6 @@ async def scrape_news_dynamic(browser, url, source, selector, default_franchise,
                 if is_duplicate(title, link): continue
 
                 raw_image_url = await img_el.get_attribute("src") if img_el else None
-                
-                # UPGRADE: Fix absolute URLs before downloading
                 raw_image_url = make_absolute_url(raw_image_url, url)
 
                 actual_franchises = determine_franchises(title, default_franchise)
@@ -308,14 +313,13 @@ async def scrape_news_dynamic(browser, url, source, selector, default_franchise,
     except Exception as e: print(f"Error ({source}): {e}")
     finally: await page.close()
 
-
 def clean_old_database_records():
     print("\n--- RUNNING DATABASE GARBAGE COLLECTION ---")
     try:
-        cutoff_date = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
-        supabase.table("TCG_NEWS").delete().lt("published_date", cutoff_date).execute()
-    except Exception: pass
-
+        cutoff_date = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
+        res = supabase.table("TCG_NEWS").delete().lt("published_date", cutoff_date).eq("is_featured", False).execute()
+        print(f"Purged records older than 60 days.")
+    except Exception as e: print(f"Garbage Collection Error: {e}")
 
 # ==========================================
 #          BLOCK: SYSTEM ORCHESTRATOR
@@ -336,9 +340,10 @@ async def main():
 
     res_reddit = supabase.table("SCRAPE_SOURCES_REDDIT").select("*").eq("is_active", True).execute()
     reddit_sources = res_reddit.data if res_reddit.data else []
+    
     for r in reddit_sources:
-        cat = r.get('default_category', 'Global News')
-        scrape_reddit(r['subreddit'], r.get('keyword'), r['min_upvotes'], r['default_franchise'], cat)
+        # We completely ignore the DB category and force the franchise extraction
+        scrape_reddit(r['subreddit'], r.get('keyword'), r['default_franchise'])
 
     if dynamic_tasks:
         async with async_playwright() as p:
