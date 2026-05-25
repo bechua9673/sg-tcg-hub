@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SG TCG HUB | Premier Trading Card Game Aggregator</title>
-    <meta name="description" content="Singapore's premier Trading Card Game (TCG) news hub. Latest meta updates, local drops, and event calendar for Pokémon, One Piece, Yu-Gi-Oh, and more.">
-    <meta name="keywords" content="Singapore TCG, Pokémon TCG Singapore, One Piece Card Game SG, TCG Events Singapore, Card Show Singapore">
     
+    <meta name="description" content="Singapore's premier Trading Card Game (TCG) news hub. Latest meta updates, local drops, and event calendar for Pokémon, One Piece, Yu-Gi-Oh, and more.">
+    <meta name="keywords" content="TCG, Trading Card Games, Pokemon TCG, One Piece Card Game, SG TCG, Singapore TCG, TCG Drops, Union Arena, Card Games">
+    <meta property="og:title" content="SG TCG HUB | Premier Trading Card Game Aggregator">
+    <meta property="og:description" content="Singapore's premier TCG news hub. Latest meta updates, local drops, and event calendar.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    
+	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='100' x='10' y='0' rx='10' fill='%234f46e5'/><circle cx='50' cy='50' r='25' fill='white'/><path d='M50 35 L65 50 L50 65 L35 50 Z' fill='%234f46e5'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,6 +25,9 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
         .nav-item { display: flex; align-items: center; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; color: #64748b; transition: all 0.2s ease; cursor: pointer; margin-bottom: 4px; border-left: 3px solid transparent; }
         .nav-item:hover { background-color: #f1f5f9; color: #0f172a; }
@@ -44,7 +53,6 @@
 
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 20px; text-align: center; background: #ffffff; border-radius: 12px; border: 1px dashed #e2e8f0; }
 
-        /* Row Card Layout Styles - WIDER DESIGN */
         .row-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #ffffff; border: 1px solid #f1f5f9; border-radius: 16px; transition: all 0.2s ease; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02); margin-bottom: 12px; width: 100%;}
         .row-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border-color: #e2e8f0; }
         .row-card-img { width: 120px; height: 120px; flex-shrink: 0; object-fit: cover; border-radius: 10px; background-color: #f8fafc; border: 1px solid #f1f5f9; padding: 4px;}
@@ -59,9 +67,8 @@
             <p id="mobile-status" class="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Syncing...</p>
         </div>
         <div class="px-5 pb-3 flex space-x-2 overflow-x-auto no-scrollbar">
-            <button onclick="setView('Global News')" class="filter-pill filter-active" data-view="Global News">Global Articles</button>
+            <button onclick="setView('TCG News')" class="filter-pill filter-active" data-view="TCG News">TCG News</button>
             <button onclick="setView('Local Drops')" class="filter-pill" data-view="Local Drops">Products</button>
-            <button onclick="setView('Local News')" class="filter-pill" data-view="Local News">Local News</button>
             <button onclick="setView('Top Reddit Posts')" class="filter-pill" data-view="Top Reddit Posts">Top Reddit</button>
             <button onclick="setView('Calendar')" class="filter-pill" data-view="Calendar">Events</button>
         </div>
@@ -79,9 +86,8 @@
         <div class="p-4 flex-1 overflow-y-auto">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Navigation</h2>
             <nav class="mb-8">
-                <div onclick="setView('Global News')" class="nav-item nav-active" data-view="Global News">Global Articles</div>
+                <div onclick="setView('TCG News')" class="nav-item nav-active" data-view="TCG News">TCG News</div>
                 <div onclick="setView('Local Drops')" class="nav-item" data-view="Local Drops">Products & Drops</div>
-                <div onclick="setView('Local News')" class="nav-item" data-view="Local News">Local News</div>
                 <div onclick="setView('Top Reddit Posts')" class="nav-item" data-view="Top Reddit Posts">Top Reddit Posts</div>
                 <div onclick="setView('Calendar')" class="nav-item" data-view="Calendar">Event Calendar</div>
             </nav>
@@ -97,6 +103,7 @@
                 <button onclick="setFranchise('yu-gi-oh')" class="filter-pill" data-franchise="yu-gi-oh">Yu-Gi-Oh!</button>
                 <button onclick="setFranchise('digimon')" class="filter-pill" data-franchise="digimon">Digimon</button>
                 <button onclick="setFranchise('hololive')" class="filter-pill" data-franchise="hololive">Hololive</button>
+                <button onclick="setFranchise('others')" class="filter-pill" data-franchise="others">Others</button>
             </div>
             
             <div id="desktop-calendar-filters" class="hidden mt-8">
@@ -112,9 +119,16 @@
 
     <main class="flex-1 flex flex-col h-[calc(100vh-110px)] md:h-screen overflow-hidden relative">
         <div class="bg-fafafa/80 backdrop-blur-md sticky top-0 z-10 px-5 md:px-8 py-5 flex justify-between items-center" id="search-container">
-            <div class="relative w-full max-w-2xl">
-                <svg class="absolute inset-y-0 left-0 my-auto ml-4 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search sets, cards, or shop names..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800 shadow-sm placeholder:text-slate-400 outline-none">
+            <div class="flex w-full max-w-3xl items-center gap-4">
+                <div class="relative w-full">
+                    <svg class="absolute inset-y-0 left-0 my-auto ml-4 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search sets, cards, or shop names..." class="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800 shadow-sm placeholder:text-slate-400 outline-none">
+                </div>
+                
+                <div id="news-layout-toggle" class="shrink-0 bg-slate-200/50 p-1 rounded-lg items-center gap-1 flex">
+                    <button onclick="setNewsLayout('list')" id="btn-list" class="px-3 py-1 rounded text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">List</button>
+                    <button onclick="setNewsLayout('grid')" id="btn-grid" class="px-3 py-1 bg-white shadow-sm rounded text-xs font-bold text-slate-700 transition-all">Grid</button>
+                </div>
             </div>
         </div>
 
@@ -124,6 +138,7 @@
             <button onclick="setFranchise('one piece')" class="filter-pill" data-franchise="one piece">One Piece</button>
             <button onclick="setFranchise('yu-gi-oh')" class="filter-pill" data-franchise="yu-gi-oh">Yu-Gi-Oh</button>
             <button onclick="setFranchise('digimon')" class="filter-pill" data-franchise="digimon">Digimon</button>
+            <button onclick="setFranchise('others')" class="filter-pill" data-franchise="others">Others</button>
         </div>
 
         <div class="flex-1 overflow-y-auto px-5 md:px-8 pb-12 pt-4 w-full" id="scroll-area">
@@ -141,33 +156,93 @@
 
             <div id="load-more-container" class="text-center mt-12 hidden">
                 <button onclick="loadMore()" class="px-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-all shadow-sm">
-                    Load More Results &darr;
+                    Load More Results ↓
                 </button>
             </div>
         </div>
     </main>
 
-    <script>
-        const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
+	<div id="report-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4">
+			<div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+				<div class="p-5 border-b border-slate-100 flex justify-between items-center">
+					<h3 class="font-bold text-slate-800">Report Content</h3>
+					<button onclick="closeReportModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+				</div>
+				
+				<form action="https://formsubmit.co/sgtcghubscraper@gmail.com" method="POST" class="p-5 flex flex-col gap-4">
+					<input type="hidden" name="_captcha" value="true">
+					<input type="hidden" name="_subject" value="⚠️ New TCG Hub Post Report">
+					<input type="text" name="_honey" style="display:none"> <input type="hidden" id="report-url" name="Post_URL" value="">
+					
+					<div>
+						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Post Title</label>
+						<input type="text" id="report-title" name="Post_Title" readonly class="w-full text-xs font-semibold bg-slate-50 p-2 rounded border border-slate-200 text-slate-600 outline-none">
+					</div>
+
+					<div>
+						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Reason for Report</label>
+						<select name="Reason" required class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 bg-white">
+							<option value="" disabled selected>Select an issue...</option>
+							<option value="Broken Link / Dead Page">Broken Link / Dead Page</option>
+							<option value="Spam / Irrelevant Content">Spam / Irrelevant Content</option>
+							<option value="Incorrect Categorization">Incorrect Categorization</option>
+							<option value="Offensive / Inappropriate">Offensive / Inappropriate</option>
+						</select>
+					</div>
+
+					<div>
+						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Additional Details (Optional)</label>
+						<textarea name="Details" rows="3" class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 resize-none"></textarea>
+					</div>
+
+					<button type="submit" class="w-full bg-red-500 text-white text-xs font-bold uppercase tracking-widest py-3 rounded hover:bg-red-600 transition-colors mt-2">Submit Report</button>
+				</form>
+			</div>
+		</div>
+<script>
+const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7";
         const _client = supabase.createClient(S_URL, S_KEY);
 
-        let currentView = 'Global News'; 
+        let currentView = 'TCG News'; 
         let currentFranchise = 'all';
         let currentSearch = '';
         let currentEventFilter = 'All';
+        let currentVendorFilter = 'All'; 
         let currentCalDate = new Date(); 
         
+        // Default to Grid Layout
+        let newsLayout = 'grid';
+        
         let currentPage = 1;
-        const ITEMS_PER_PAGE = 25; 
+        const ITEMS_PER_PAGE = 48; // Increased global page size
         
         let allData = [];
         let allEvents = [];
         let vendorBanners = [];
         let billboardData = [];
+        let commonEvents = [];
         
         let currentSlide = 0;
         let slideInterval;
+
+        function openReportModal(url, title) {
+            document.getElementById('report-url').value = url;
+            document.getElementById('report-title').value = title;
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
 
         function updateStatus(text) {
             document.getElementById('mobile-status').innerText = text;
@@ -177,15 +252,17 @@
         async function fetchHub() {
             updateStatus('Syncing...');
             try {
-                const [resVendors, resNews, resEvents] = await Promise.all([
+                const [resVendors, resNews, resEvents, resCommonEvents] = await Promise.all([
                     _client.from('VENDORS').select('*'),
                     _client.from('TCG_NEWS').select('*').is('hidden', false).order('published_date', { ascending: false }),
-                    _client.from('EVENTS').select('*').order('start_date', { ascending: true })
+                    _client.from('EVENTS').select('*').order('start_date', { ascending: true }),
+                    _client.from('COMMON_EVENTS').select('*')
                 ]);
                 
                 if (resVendors.data) vendorBanners = resVendors.data;
                 if (resNews.data) allData = resNews.data;
                 if (resEvents.data) allEvents = resEvents.data;
+                if (resCommonEvents.data) commonEvents = resCommonEvents.data;
 
                 updateStatus(`Updated ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
                 renderBillboard();
@@ -193,14 +270,31 @@
             } catch (error) { updateStatus('Sync Failed'); console.error(error); }
         }
 
-        // --- MANUAL FEATURE BILLBOARD LOGIC ---
+        function scrollToEvent(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-2', 'ring-indigo-500', 'shadow-lg');
+                setTimeout(() => { el.classList.remove('ring-2', 'ring-indigo-500', 'shadow-lg'); }, 1500);
+            }
+        }
+
+        function setNewsLayout(mode) {
+            newsLayout = mode;
+            document.getElementById('btn-list').className = mode === 'list' ? "px-3 py-1 bg-white shadow-sm rounded text-xs font-bold text-slate-700 transition-all" : "px-3 py-1 rounded text-xs font-bold text-slate-500 hover:text-slate-700 transition-all";
+            document.getElementById('btn-grid').className = mode === 'grid' ? "px-3 py-1 bg-white shadow-sm rounded text-xs font-bold text-slate-700 transition-all" : "px-3 py-1 rounded text-xs font-bold text-slate-500 hover:text-slate-700 transition-all";
+            render(false);
+        }
+
         function renderBillboard() {
             const container = document.getElementById('billboard-container');
             const track = document.getElementById('billboard-track');
             
-            // The billboard pulls ALL posts that you have manually clicked "Feature" on in the Admin Panel
-            // It filters them to only show on the Category tab you are currently looking at.
-            billboardData = allData.filter(item => item.is_featured === true && (item.category || '') === currentView);
+            billboardData = allData.filter(item => {
+                if(!item.is_featured) return false;
+                if(currentView === 'TCG News') return item.category === 'Global News' || item.category === 'Local News';
+                return (item.category || '') === currentView;
+            });
             
             if (currentView === 'Calendar' || currentSearch !== '' || billboardData.length === 0) {
                 container.classList.add('hidden');
@@ -244,14 +338,13 @@
             startCarousel();
         }
 
-        // --- NAVIGATION & FILTERS ---
         function resetView() {
-            document.getElementById('search-input').value = ''; currentSearch = ''; 
-            setFranchise('all'); setView('Global News');
+            document.getElementById('search-input').value = ''; currentSearch = ''; currentVendorFilter = 'All';
+            setFranchise('all'); setView('TCG News');
         }
 
         function setView(viewName) {
-            currentView = viewName; currentPage = 1; 
+            currentView = viewName; currentPage = 1; currentVendorFilter = 'All';
             
             document.querySelectorAll('[data-view]').forEach(btn => {
                 if(btn.tagName === 'BUTTON') btn.classList.toggle('filter-active', btn.getAttribute('data-view') === viewName);
@@ -264,6 +357,8 @@
             document.getElementById('desktop-calendar-filters').style.display = isCalendar ? 'block' : 'none';
             document.getElementById('search-container').style.display = isCalendar ? 'none' : 'flex';
             
+            document.getElementById('news-layout-toggle').style.display = (viewName === 'TCG News' || viewName === 'Top Reddit Posts') ? 'flex' : 'none';
+            
             renderBillboard(); render();
         }
 
@@ -271,6 +366,11 @@
             currentFranchise = franchiseName; currentPage = 1; 
             document.querySelectorAll('[data-franchise]').forEach(btn => btn.classList.toggle('filter-active', btn.getAttribute('data-franchise') === franchiseName));
             renderBillboard(); render();
+        }
+        
+        function setVendorFilter(vendorName) {
+            currentVendorFilter = vendorName; currentPage = 1;
+            render(false);
         }
 
         function handleSearch() { currentSearch = document.getElementById('search-input').value.toLowerCase().trim(); currentPage = 1; renderBillboard(); render(); }
@@ -285,14 +385,16 @@
             container.innerHTML = `<div class="empty-state">${icon}<h3 class="text-sm font-semibold text-slate-700">${message}</h3><p class="text-xs text-slate-400 mt-1">Try adjusting your filters.</p></div>`;
         }
 
-        // --- MAIN RENDERER ---
         function render(resetScroll = true) {
             const container = document.getElementById('content-container');
             const loadMoreBtn = document.getElementById('load-more-container');
             
             if (currentView === 'Calendar') { container.innerHTML = ''; loadMoreBtn.classList.add('hidden'); renderCalendarGrid(container); renderEventList(container); if(resetScroll) document.getElementById('scroll-area').scrollTop = 0; return; }
 
-            let filteredData = allData.filter(item => (item.category || '') === currentView);
+            let filteredData = allData.filter(item => {
+                if(currentView === 'TCG News') return item.category === 'Global News' || item.category === 'Local News';
+                return (item.category || '') === currentView;
+            });
             
             if (currentFranchise !== 'all') {
                 filteredData = filteredData.filter(item => {
@@ -305,38 +407,82 @@
                 filteredData = filteredData.filter(item => (item.title || '').toLowerCase().includes(currentSearch) || (item.source || '').toLowerCase().includes(currentSearch));
             }
 
+            container.innerHTML = '';
+
+            if (currentView === 'Local Drops' && !currentSearch) {
+                const uniqueVendors = [...new Set(filteredData.map(i => i.source))];
+                let vendorButtons = `<div class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-slate-100 no-scrollbar">
+                    <button onclick="setVendorFilter('All')" class="filter-pill ${currentVendorFilter === 'All' ? 'filter-active' : ''}">All Vendors</button>`;
+                uniqueVendors.forEach(v => {
+                    const cleanName = v.replace('Telegram: ', '').replace('Reddit: r/', '');
+                    vendorButtons += `<button onclick="setVendorFilter('${v}')" class="filter-pill ${currentVendorFilter === v ? 'filter-active' : ''}">${cleanName}</button>`;
+                });
+                vendorButtons += `</div>`;
+                container.innerHTML += vendorButtons;
+
+                if (currentVendorFilter !== 'All') {
+                    filteredData = filteredData.filter(i => i.source === currentVendorFilter);
+                }
+            }
+
             if (filteredData.length === 0) { renderEmptyState(container, currentSearch !== ''); loadMoreBtn.classList.add('hidden'); return; }
 
             const paginatedData = filteredData.slice(0, currentPage * ITEMS_PER_PAGE);
-            if (filteredData.length > paginatedData.length) loadMoreBtn.classList.remove('hidden'); else loadMoreBtn.classList.add('hidden');
-
-            container.innerHTML = '';
             
-            if (currentView === 'Local Drops' && !currentSearch) {
+            // IF viewing all vendors, bypass global pagination to guarantee every vendor gets items
+            if (currentView === 'Local Drops' && !currentSearch && currentVendorFilter === 'All') {
+                loadMoreBtn.classList.add('hidden'); // Hide load more, we show everything grouped
                 const groupedVendors = {};
-                paginatedData.forEach(item => { 
-                    const source = (item.source || 'UNKNOWN').toUpperCase(); 
+                
+                // Group ALL available data (not just the paginated slice)
+                filteredData.forEach(item => { 
+                    const source = item.source || 'UNKNOWN'; 
                     if (!groupedVendors[source]) groupedVendors[source] = []; 
                     groupedVendors[source].push(item); 
                 });
                 
-                for (const [vendor, items] of Object.entries(groupedVendors)) {
-                    const cleanVendor = vendor.replace('TELEGRAM: ', '').replace('REDDIT: R/', '').trim();
-                    const matchedVendor = vendorBanners.find(v => (v.name || '').toUpperCase() === cleanVendor || (v.name || '').toUpperCase() === vendor);
+                // Shuffle the vendors so everyone gets a fair chance at being seen
+                let vendorEntries = Object.entries(groupedVendors);
+                vendorEntries = shuffleArray(vendorEntries);
+                
+                let html = `<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 w-full">`;
+                for (const [vendor, items] of vendorEntries) {
+                    const cleanVendor = vendor.replace('Telegram: ', '').replace('Reddit: r/', '').trim();
+                    const matchedVendor = vendorBanners.find(v => (v.name || '').toUpperCase() === cleanVendor.toUpperCase() || (v.name || '').toUpperCase() === vendor.toUpperCase());
                     
-                    let headerHtml = matchedVendor && matchedVendor.logo_url 
-                        ? `<div class="matched-vendor-banner mb-6" style="background-image: linear-gradient(to right, rgba(15, 23, 42, 0.95), transparent 60%), url('${matchedVendor.logo_url}');"><div class="banner-content p-6 flex flex-col justify-end"><h3 class="banner-name">${cleanVendor}</h3><p class="banner-category text-indigo-200">Retailer Group</p></div></div>`
-                        : `<div class="matched-vendor-banner no-logo mb-6 p-6 flex flex-col justify-end"><h3 class="banner-name text-slate-800">${vendor}</h3><p class="banner-category text-slate-400">Retailer Group</p></div>`;
-                        
-                    let html = `<div class="mb-14">${headerHtml}<div class="flex flex-col w-full">`;
-                    items.forEach(item => { html += buildRowCard(item); });
-                    container.innerHTML += html + `</div></div>`;
+                    // Large Report Button for the Vendor
+                    const vendorReportBtn = `<button onclick="openReportModal('${cleanVendor}', 'Vendor Report: ${cleanVendor}'); return false;" class="absolute top-4 right-4 bg-white/20 hover:bg-red-500 hover:text-white text-slate-200 p-2 rounded-full backdrop-blur-sm transition-colors shadow-sm" title="Report Vendor"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
+                    
+                    let vendorHtml = `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col h-[400px]">`;
+                    
+                    if(matchedVendor && matchedVendor.logo_url) {
+                        vendorHtml += `<div class="w-full h-24 flex-shrink-0 bg-cover bg-center border-b border-slate-100 relative" style="background-image: url('${matchedVendor.logo_url}');"><div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 to-transparent"></div>${vendorReportBtn}<div class="absolute bottom-4 left-4"><h3 class="text-white font-bold text-lg leading-none">${cleanVendor}</h3></div></div>`;
+                    } else {
+                        vendorHtml += `<div class="w-full h-20 flex-shrink-0 bg-slate-50 border-b border-slate-100 p-4 flex flex-col justify-end relative">${vendorReportBtn.replace('text-slate-200', 'text-slate-400').replace('bg-white/20', 'bg-slate-200')}<h3 class="text-slate-800 font-bold text-lg leading-none">${cleanVendor}</h3></div>`;
+                    }
+                    
+                    vendorHtml += `<div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">`;
+                    // Limit to 24 items max per vendor
+                    items.slice(0, 24).forEach(item => { vendorHtml += buildRowCard(item, 'compact'); });
+                    vendorHtml += `</div></div>`;
+                    html += vendorHtml;
                 }
-            } else {
-                if(currentSearch) container.innerHTML += `<p class="text-xs font-medium text-slate-500 mb-5 border-b border-slate-200 pb-2">Search Results: ${filteredData.length}</p>`;
-                let html = `<div class="flex flex-col w-full">`;
-                paginatedData.forEach(item => { html += buildRowCard(item); });
                 container.innerHTML += html + `</div>`;
+            } else {
+                if (filteredData.length > paginatedData.length) loadMoreBtn.classList.remove('hidden'); 
+                else loadMoreBtn.classList.add('hidden');
+                
+                if(currentSearch) container.innerHTML += `<p class="text-xs font-medium text-slate-500 mb-5 border-b border-slate-200 pb-2">Search Results: ${filteredData.length}</p>`;
+                
+                if ((currentView === 'TCG News' || currentView === 'Top Reddit Posts') && newsLayout === 'grid') {
+                     let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 w-full">`;
+                     paginatedData.forEach(item => { html += buildRowCard(item, 'grid'); });
+                     container.innerHTML += html + `</div>`;
+                } else {
+                     let html = `<div class="flex flex-col w-full">`;
+                     paginatedData.forEach(item => { html += buildRowCard(item, 'list'); });
+                     container.innerHTML += html + `</div>`;
+                }
             }
             if(resetScroll) document.getElementById('scroll-area').scrollTop = 0;
         }
@@ -350,9 +496,9 @@
                 <div class="flex justify-between items-center mb-6 bg-white px-5 py-4 rounded-xl border border-slate-100 shadow-sm w-full">
                     <h2 class="text-lg font-bold text-slate-800">${monthName} ${year}</h2>
                     <div class="flex space-x-2">
-                        <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-600 transition-colors">&lt;</button>
+                        <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-600 transition-colors"><</button>
                         <button onclick="currentCalDate = new Date(); render();" class="px-4 py-1.5 bg-slate-50 hover:bg-slate-100 text-xs font-semibold uppercase tracking-wider rounded-md text-slate-600 transition-colors hidden md:block">Today</button>
-                        <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-600 transition-colors">&gt;</button>
+                        <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-600 transition-colors">></button>
                     </div>
                 </div>
                 <div class="cal-grid shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] mb-12 w-full">`;
@@ -378,10 +524,16 @@
                     if(currentEventFilter !== 'All' && ev.event_type !== currentEventFilter) return;
                     if (cellDateStr >= ev.start_date && cellDateStr <= (ev.end_date || ev.start_date)) {
                         const colorClass = ev.event_type === 'Box Release' ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100';
-                        const mapQuery = encodeURIComponent(`${ev.location || ''} ${ev.address || ''}`);
-                        const iconHtml = ev.image_url ? `<img src="${ev.image_url}" class="w-6 h-6 rounded-md object-cover flex-shrink-0" onerror="this.style.display='none'">` : `<span class="flex-shrink-0 leading-none">●</span>`;
                         
-                        cellHtml += `<a href="http://googleusercontent.com/maps.google.com/maps?q=${mapQuery}" target="_blank" class="event-chip ${colorClass}" title="${ev.title}">
+                        let iconUrl = ev.image_url;
+                        if (!iconUrl) {
+                            const matchedCommon = commonEvents.find(ce => (ev.title || '').toLowerCase().includes(ce.keyword.toLowerCase()));
+                            if (matchedCommon) iconUrl = matchedCommon.logo_url;
+                        }
+                        
+                        const iconHtml = iconUrl ? `<img src="${iconUrl}" class="w-6 h-6 rounded-md object-cover flex-shrink-0" onerror="this.style.display='none'">` : `<span class="flex-shrink-0 leading-none">●</span>`;
+                        
+                        cellHtml += `<a href="#event-${ev.id}" onclick="scrollToEvent('event-${ev.id}'); return false;" class="event-chip ${colorClass}" title="${ev.title}">
                             ${iconHtml}
                             <span class="truncate">${ev.title || 'Event'}</span>
                         </a>`;
@@ -406,12 +558,23 @@
                 const isMultiDay = ev.start_date !== ev.end_date;
                 const dateDisplay = isMultiDay ? `${sDate.getDate()}-${new Date(ev.end_date).getDate()}` : sDate.getDate();
                 const badgeColor = ev.event_type === 'Box Release' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700';
-                const imgUrl = ev.image_url || `https://placehold.co/600x400/4f46e5/ffffff?text=${(ev.title || 'Event').split(' ')[0]}`;
+                
+                const matchedCommon = commonEvents.find(ce => (ev.title || '').toLowerCase().includes(ce.keyword.toLowerCase()));
+                const safeFallback = matchedCommon ? matchedCommon.logo_url : `https://placehold.co/600x400/4f46e5/ffffff?text=${encodeURIComponent((ev.title || 'Event').split(' ')[0])}`;
+
+                let finalImgUrl = ev.image_url;
+                if (!finalImgUrl || finalImgUrl === 'null' || finalImgUrl.includes('placeholder')) {
+                    finalImgUrl = safeFallback;
+                }
+
+                const correctMapLink = `http://googleusercontent.com/maps.google.com/maps?q=${encodeURIComponent(`${ev.location || ''} ${ev.address || ''}`)}`;
 
                 html += `
-                    <div class="bento-card flex flex-col md:flex-row hover:-translate-y-1">
-                        <div class="md:w-2/5 h-48 md:h-auto relative bg-slate-100 border-r border-slate-100"><img src="${imgUrl}" class="w-full h-full object-cover absolute inset-0"></div>
-                        <div class="md:w-3/5 flex flex-col bg-white">
+                    <div id="event-${ev.id}" class="bento-card flex flex-col md:flex-row hover:-translate-y-1 transition-all duration-300 rounded-lg">
+                        <div class="md:w-2/5 h-48 md:h-auto relative bg-slate-100 border-r border-slate-100">
+                            <img src="${finalImgUrl}" onerror="this.onerror=null; this.src='${safeFallback}';" class="w-full h-full object-cover absolute inset-0">
+                        </div>
+                        <div class="md:w-3/5 flex flex-col bg-white border border-slate-100 rounded-r-lg">
                             <div class="flex border-b border-slate-100">
                                 <div class="bg-slate-50 p-4 flex flex-col justify-center items-center min-w-[80px] border-r border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${sDate.toLocaleString('default', { month: 'short' })}</span><span class="text-2xl font-black text-slate-800">${dateDisplay}</span></div>
                                 <div class="p-4 flex-grow flex items-center"><h3 class="text-sm font-semibold leading-snug text-slate-900">${ev.title}</h3></div>
@@ -420,15 +583,16 @@
                                 <div class="flex items-center justify-between"><span class="flex items-center font-medium">🕒 ${ev.time_info || 'Time TBC'}</span><span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${badgeColor} ml-2">${ev.event_type}</span></div>
                                 <div class="flex items-start mt-2"><span class="mr-2">📍</span><div><span class="font-semibold text-slate-800">${ev.location || 'Location TBC'}</span><br><span class="text-[11px] text-slate-500">${ev.address || ''}</span></div></div>
                             </div>
-                            <div class="px-4 py-3 bg-slate-50 border-t border-slate-100"><a href="http://googleusercontent.com/maps.google.com/maps?q=${encodeURIComponent(`${ev.location || ''} ${ev.address || ''}`)}" target="_blank" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center">🗺️ Open Map</a></div>
+                            <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 rounded-br-lg">
+                                <a href="${correctMapLink}" target="_blank" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center">🗺️ Open Map</a>
+                            </div>
                         </div>
                     </div>`;
             });
             container.innerHTML += html + `</div></div>`;
         }
 
-        // --- FULL WIDTH ROW CARD RENDERER ---
-        function buildRowCard(item) {
+        function buildRowCard(item, layout = 'list') {
             const displayDate = new Date(item.published_date || item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const placeholder = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23f8fafc'><rect width='100%25' height='100%25'/></svg>`;
             
@@ -439,18 +603,67 @@
             if(currentSearch) titleHTML = titleHTML.replace(new RegExp(currentSearch, "gi"), match => `<mark class="bg-yellow-200 text-slate-900 px-1 rounded">${match}</mark>`);
 
             const displaySource = (item.source || 'UNKNOWN').replace('Telegram: ', '').replace('Reddit: r/', '');
-            const imgClass = (item.category || '').includes('News') ? "news-img-row" : "object-contain";
+            
+            let locationTag = '';
+            if (currentView === 'TCG News') {
+                 const loc = item.category === 'Local News' ? 'LOCAL' : 'OVERSEAS';
+                 const locStyle = item.category === 'Local News' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700';
+                 locationTag = `<span class="${locStyle} text-[9px] font-bold uppercase px-1.5 py-0.5 rounded leading-none">${loc}</span>`;
+            }
 
+            // Enlarged Report Button Logic
+            const safeTitle = titleHTML.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const reportBtn = `<button onclick="openReportModal('${item.url}', '${safeTitle}'); return false;" class="text-slate-400 hover:text-red-500 transition-colors ml-auto flex items-center gap-1" title="Report Post"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
+
+            if (layout === 'grid') {
+                return `
+                    <a href="${item.url}" target="_blank" class="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col h-full group">
+                        <div class="h-40 w-full overflow-hidden bg-slate-50"><img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"></div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <div class="flex justify-between items-center mb-2">
+                               <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${tag}</span>
+                               ${locationTag}
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 line-clamp-3 mb-3 group-hover:text-indigo-600 transition-colors">${titleHTML}</h3>
+                            <div class="mt-auto flex items-center gap-2 border-t border-slate-50 pt-3">
+                                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate max-w-[120px]">${displaySource}</span>
+                                 <span class="text-[10px] font-medium text-slate-400">${displayDate}</span>
+                                 ${reportBtn}
+                            </div>
+                        </div>
+                    </a>`;
+            }
+            
+            if (layout === 'compact') {
+                return `
+                    <a href="${item.url}" target="_blank" class="flex gap-3 group p-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100 relative">
+                        <img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="w-16 h-16 rounded object-cover border border-slate-100 flex-shrink-0">
+                        <div class="flex flex-col flex-1 min-w-0 justify-center py-1">
+                            <h4 class="text-[13px] font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors pr-6">${titleHTML}</h4>
+                            <div class="flex items-center gap-2 mt-auto pt-1">
+                                <span class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">${tag}</span>
+                                <span class="text-[9px] font-medium text-slate-400 ml-auto">${displayDate}</span>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2">${reportBtn}</div>
+                    </a>`;
+            }
+
+            const imgClass = (item.category || '').includes('News') ? "news-img-row" : "object-contain";
             return `
                 <article>
-                    <a href="${item.url}" target="_blank" class="row-card group">
+                    <a href="${item.url}" target="_blank" class="row-card group flex w-full">
                         <img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="row-card-img ${imgClass}" alt="${titleHTML}" loading="lazy">
-                        <div class="flex flex-col justify-center flex-grow py-2 pr-2">
-                            <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1.5">${tag}</span>
-                            <h3 class="text-sm md:text-base font-bold leading-snug text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-3">${titleHTML}</h3>
+                        <div class="flex flex-col justify-center flex-grow py-2 pr-2 min-w-0">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${tag}</span>
+                                ${locationTag}
+                            </div>
+                            <h3 class="text-sm md:text-base font-bold leading-snug text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-3 pr-4">${titleHTML}</h3>
                             <div class="flex items-center gap-3 mt-auto">
-                                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">${displaySource}</span>
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded truncate max-w-[150px]">${displaySource}</span>
                                 <span class="text-[11px] font-medium text-slate-400">${displayDate}</span>
+                                ${reportBtn}
                             </div>
                         </div>
                     </a>
@@ -459,6 +672,7 @@
 
         fetchHub();
         setInterval(fetchHub, 300000); 
+    </script>
     </script>
 </body>
 </html>

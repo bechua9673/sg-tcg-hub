@@ -138,9 +138,19 @@
 
             <div class="lg:col-span-2">
                 <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm mb-8">
-                    <h2 class="text-xs font-black uppercase tracking-widest mb-6">Manage Scraped Posts</h2>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+                        <h2 class="text-xs font-black uppercase tracking-widest">Manage Scraped Posts</h2>
+                        <div class="flex flex-wrap space-x-1 bg-gray-100 p-1 rounded-lg">
+                            <button onclick="setAdminPostFilter('All')" id="af-All" class="px-3 py-1.5 text-[10px] font-bold rounded-md bg-white shadow-sm text-black">All</button>
+                            <button onclick="setAdminPostFilter('Web')" id="af-Web" class="px-3 py-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-900 rounded-md">Web</button>
+                            <button onclick="setAdminPostFilter('Google')" id="af-Google" class="px-3 py-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-900 rounded-md">Google</button>
+                            <button onclick="setAdminPostFilter('Telegram')" id="af-Telegram" class="px-3 py-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-900 rounded-md">Telegram</button>
+                            <button onclick="setAdminPostFilter('Reddit')" id="af-Reddit" class="px-3 py-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-900 rounded-md">Reddit</button>
+                        </div>
+                    </div>
                     <div id="admin-grid" class="space-y-2 max-h-[600px] overflow-y-auto pr-2"></div>
                 </div>
+                
                 <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
                     <h2 class="text-xs font-black uppercase tracking-widest text-indigo-800 mb-6">Manage Events (Manual Override)</h2>
                     <div id="event-grid" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
@@ -153,6 +163,9 @@
         const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; 
         const _client = supabase.createClient(S_URL, S_KEY);
+
+        let adminPostsData = [];
+        let currentAdminFilter = 'All';
 
         async function checkSession() { const { data: { session } } = await _client.auth.getSession(); if (session) showDashboard(); }
         async function login() { const email = document.getElementById('email').value; const password = document.getElementById('password').value; const { error } = await _client.auth.signInWithPassword({ email, password }); if (error) { document.getElementById('login-error').innerText = error.message; document.getElementById('login-error').classList.remove('hidden'); } else { showDashboard(); } }
@@ -202,7 +215,7 @@
                 subreddit: document.getElementById('rs-sub').value.replace('r/', ''), 
                 keyword: document.getElementById('rs-kw').value.trim() || null, 
                 default_franchise: document.getElementById('rs-franchise').value, 
-                default_category: 'Top Reddit Posts' // Hardcoded!
+                default_category: 'Top Reddit Posts' 
             }; 
             if(!data.subreddit) return alert("Subreddit is required!"); 
             await _client.from('SCRAPE_SOURCES_REDDIT').insert([data]); loadSources(); 
@@ -241,8 +254,72 @@
         async function addIgnoreKeyword() { await _client.from('IGNORE_KEYWORDS').insert([{ keyword: document.getElementById('ig-text').value.toLowerCase().trim() }]); document.getElementById('ig-text').value=''; loadKeywords(); }
         async function deleteKeyword(table, id) { await _client.from(table).delete().eq('id', id); loadKeywords(); }
         
-        // --- UPGRADED POST MANAGER WITH FEATURE BUTTON ---
-        async function loadAdminData() { const { data } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(60); const grid = document.getElementById('admin-grid'); grid.innerHTML = ''; if(data) data.forEach(item => { const isHidden = item.hidden; const isFeatured = item.is_featured; grid.innerHTML += `<div class="bg-gray-50 rounded-lg border ${isHidden ? 'border-red-300 bg-red-50/50' : 'border-gray-100'} p-3 flex justify-between items-center gap-4"><div><span class="text-[9px] font-black uppercase text-gray-400 block mb-1">${item.source} | ${item.category}</span><h3 class="text-sm font-semibold ${isHidden ? 'line-through text-gray-500' : ''}">${item.title}</h3></div><div class="flex flex-col gap-1.5"><button onclick="toggleFeature('${item.url}', ${isFeatured})" class="px-3 py-1.5 text-[9px] font-bold uppercase rounded ${isFeatured ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700'} border border-orange-200 whitespace-nowrap shadow-sm hover:shadow transition-all">${isFeatured ? '★ Featured' : '☆ Feature'}</button><button onclick="toggleVisibility('${item.url}', ${isHidden})" class="px-3 py-1 text-[9px] font-bold uppercase rounded ${isHidden ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}">${isHidden ? 'Unhide' : 'Hide'}</button></div></div>`; }); }
+        // --- NEW TABBED ADMIN GRID LOGIC ---
+        function setAdminPostFilter(filter) {
+            currentAdminFilter = filter;
+            ['All', 'Web', 'Google', 'Telegram', 'Reddit'].forEach(f => {
+                const btn = document.getElementById(`af-${f}`);
+                if (btn) {
+                    btn.className = (f === filter) 
+                        ? "px-3 py-1.5 text-[10px] font-bold rounded-md bg-white shadow-sm text-black" 
+                        : "px-3 py-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-900 rounded-md";
+                }
+            });
+            renderAdminGrid();
+        }
+
+        async function loadAdminData() { 
+            // Increased limit to easily grab Google Alerts
+            const { data } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(300); 
+            adminPostsData = data || [];
+            renderAdminGrid();
+        }
+
+		function renderAdminGrid() {
+            const grid = document.getElementById('admin-grid');
+            grid.innerHTML = '';
+            
+            // Get search query
+            const searchQuery = document.getElementById('admin-search').value.toLowerCase().trim();
+
+            let filtered = adminPostsData;
+            
+            // Apply Live Search First
+            if (searchQuery) {
+                filtered = filtered.filter(i => 
+                    (i.title || '').toLowerCase().includes(searchQuery) || 
+                    (i.source || '').toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Apply Tab Filters
+            if (currentAdminFilter === 'Telegram') filtered = filtered.filter(i => (i.source || '').includes('Telegram'));
+            else if (currentAdminFilter === 'Reddit') filtered = filtered.filter(i => (i.source || '').includes('Reddit'));
+            else if (currentAdminFilter === 'Google') filtered = filtered.filter(i => (i.source || '') === 'Google Alerts');
+            else if (currentAdminFilter === 'Web') filtered = filtered.filter(i => !(i.source || '').includes('Telegram') && !(i.source || '').includes('Reddit') && (i.source || '') !== 'Google Alerts');
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 font-semibold uppercase tracking-widest">No posts found for this query.</div>';
+                return;
+            }
+
+            filtered.forEach(item => { 
+                const isHidden = item.hidden; 
+                const isFeatured = item.is_featured; 
+                grid.innerHTML += `
+                    <div class="bg-gray-50 rounded-lg border ${isHidden ? 'border-red-300 bg-red-50/50' : 'border-gray-100'} p-3 flex justify-between items-center gap-4">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[9px] font-black uppercase text-gray-400 block mb-1">${item.source} | ${item.category}</span>
+                            <h3 class="text-sm font-semibold truncate ${isHidden ? 'line-through text-gray-500' : ''}" title="${item.title}">${item.title}</h3>
+                        </div>
+                        <div class="flex flex-col gap-1.5 shrink-0">
+                            <button onclick="toggleFeature('${item.url}', ${isFeatured})" class="px-3 py-1.5 text-[9px] font-bold uppercase rounded ${isFeatured ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700'} border border-orange-200 whitespace-nowrap shadow-sm hover:shadow transition-all">${isFeatured ? '★ Featured' : '☆ Feature'}</button>
+                            <button onclick="toggleVisibility('${item.url}', ${isHidden})" class="px-3 py-1 text-[9px] font-bold uppercase rounded ${isHidden ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}">${isHidden ? 'Unhide' : 'Hide'}</button>
+                        </div>
+                    </div>`; 
+            });
+        }
+
         async function toggleVisibility(url, currentState) { await _client.from('TCG_NEWS').update({ hidden: !currentState }).eq('url', url); loadAdminData(); }
         async function toggleFeature(url, currentState) { await _client.from('TCG_NEWS').update({ is_featured: !currentState }).eq('url', url); loadAdminData(); }
         async function addPost() { const imgUrl = await uploadImageToSupabase('m-img', 'scraped'); const post = { title: document.getElementById('m-title').value, url: document.getElementById('m-url').value, source: document.getElementById('m-source').value, category: document.getElementById('m-category').value, franchise: document.getElementById('m-franchise').value, image_url: imgUrl, hidden: false, is_featured: false }; await _client.from('TCG_NEWS').upsert(post, { onConflict: 'url' }); alert("Post Added!"); document.getElementById('m-title').value = ''; document.getElementById('m-url').value = ''; document.getElementById('m-img').value = ''; loadAdminData(); }
