@@ -35,7 +35,7 @@
 
         .filter-pill { padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; background: transparent; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
         .filter-pill:hover { border-color: #94a3b8; color: #0f172a; }
-        .filter-active { background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 600; }
+        .filter-active { background: #4f46e5; color: #ffffff; border-color: #4f46e5; font-weight: 600; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
 
         .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
         .cal-cell { min-height: 100px; padding: 8px; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; }
@@ -48,20 +48,20 @@
 
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 20px; text-align: center; background: #ffffff; border-radius: 12px; border: 1px dashed #e2e8f0; }
 
-        .row-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #ffffff; border: 1px solid #f1f5f9; border-radius: 16px; transition: all 0.2s ease; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02); margin-bottom: 12px; width: 100%;}
+        .row-card { display: flex; align-items: center; gap: 16px; padding: 12px sm:padding: 16px; background: #ffffff; border: 1px solid #f1f5f9; border-radius: 16px; transition: all 0.2s ease; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02); margin-bottom: 12px; width: 100%;}
         .row-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border-color: #e2e8f0; }
-        .row-card-img { width: 120px; height: 120px; flex-shrink: 0; object-fit: cover; border-radius: 10px; background-color: #f8fafc; border: 1px solid #f1f5f9; padding: 4px;}
+        .row-card-img { width: 100px; height: 100px; sm:width: 120px; sm:height: 120px; flex-shrink: 0; object-fit: cover; border-radius: 10px; background-color: #f8fafc; border: 1px solid #f1f5f9; padding: 4px;}
         .news-img-row { object-fit: cover; padding: 0; }
     </style>
 </head>
 <body class="md:flex h-screen overflow-hidden">
 
     <header class="md:hidden bg-white border-b border-gray-100 z-50 sticky top-0">
-        <div class="px-5 py-4 flex justify-between items-center">
+        <div class="px-3 sm:px-5 py-4 flex justify-between items-center">
             <h1 onclick="resetView()" class="text-xl font-black uppercase tracking-tight text-slate-900 cursor-pointer">SG TCG HUB</h1>
             <p id="mobile-status" class="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Syncing...</p>
         </div>
-        <div class="px-5 pb-3 flex space-x-2 overflow-x-auto no-scrollbar">
+        <div class="px-3 sm:px-5 pb-3 flex space-x-2 overflow-x-auto no-scrollbar">
             <button onclick="setView('TCG News')" class="filter-pill filter-active" data-view="TCG News">TCG News</button>
             <button onclick="setView('Local Drops')" class="filter-pill" data-view="Local Drops">Products</button>
             <button onclick="setView('Calendar')" class="filter-pill" data-view="Calendar">Events</button>
@@ -115,7 +115,7 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-[calc(100vh-110px)] md:h-screen overflow-hidden relative">
-        <div class="bg-fafafa/80 backdrop-blur-md sticky top-0 z-10 px-5 md:px-8 py-5 flex justify-between items-center" id="search-container">
+        <div class="bg-[#fafafa]/90 backdrop-blur-md sticky top-0 z-10 px-3 sm:px-5 md:px-8 py-4 flex justify-between items-center" id="search-container">
             <div class="flex w-full max-w-3xl items-center gap-4">
                 <div class="relative w-full">
                     <svg class="absolute inset-y-0 left-0 my-auto ml-4 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -129,7 +129,7 @@
             </div>
         </div>
 
-        <div class="md:hidden bg-fafafa px-5 py-2 flex space-x-2 overflow-x-auto no-scrollbar" id="mobile-filters">
+        <div class="md:hidden bg-[#fafafa] px-3 sm:px-5 py-3 flex space-x-2 overflow-x-auto no-scrollbar" id="mobile-filters">
             <button onclick="setFranchise('all')" class="filter-pill filter-active" data-franchise="all">All</button>
             <button onclick="setFranchise('pokemon')" class="filter-pill" data-franchise="pokemon">Pokémon</button>
             <button onclick="setFranchise('one piece')" class="filter-pill" data-franchise="one piece">One Piece</button>
@@ -138,9 +138,9 @@
             <button onclick="setFranchise('others')" class="filter-pill" data-franchise="others">Others</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-5 md:px-8 pb-12 pt-4 w-full" id="scroll-area">
+        <div class="flex-1 overflow-y-auto px-3 sm:px-5 md:px-8 pb-20 pt-4 w-full" id="scroll-area">
             
-            <section id="billboard-container" class="w-full h-72 md:h-96 relative overflow-hidden rounded-2xl mb-8 group hidden shadow-md">
+            <section id="billboard-container" class="w-full h-64 md:h-96 relative overflow-hidden rounded-2xl mb-6 md:mb-8 group hidden shadow-md">
                 <div id="billboard-track" class="flex transition-transform duration-700 ease-in-out h-full w-full"></div>
                 <div class="absolute bottom-4 right-6 flex gap-2">
                     <button onclick="prevSlide()" class="bg-black/30 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
@@ -151,7 +151,7 @@
 
             <div id="content-container" class="w-full min-h-[400px]"></div>
 
-            <div id="load-more-container" class="text-center mt-12 hidden">
+            <div id="load-more-container" class="text-center mt-8 md:mt-12 hidden">
                 <button onclick="loadMore()" class="px-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-all shadow-sm">
                     Load More Results &darr;
                 </button>
@@ -159,7 +159,6 @@
         </div>
     </main>
 
-    <!-- Post Preview Modal -->
     <div id="preview-modal" class="hidden fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div class="relative w-full h-48 md:h-64 bg-slate-100 flex-shrink-0">
@@ -186,7 +185,6 @@
         </div>
     </div>
 
-    <!-- Report Modal -->
     <div id="report-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center">
@@ -642,7 +640,7 @@
                 if(currentSearch) container.innerHTML += `<p class="text-xs font-medium text-slate-500 mb-5 border-b border-slate-200 pb-2">Search Results: ${filteredData.length}</p>`;
                 
                 if ((currentView === 'TCG News') && newsLayout === 'grid') {
-                     let html = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 w-full">`;
+                     let html = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 w-full">`;
                      paginatedData.forEach(item => { html += buildRowCard(item, 'grid'); });
                      container.innerHTML += html + `</div>`;
                 } else {
@@ -668,7 +666,7 @@
                         <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-600 transition-colors">></button>
                     </div>
                 </div>
-                <div class="cal-grid shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] mb-12 w-full">`;
+                <div class="hidden md:grid cal-grid shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] mb-12 w-full">`;
             
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             const isMobile = window.innerWidth < 768;
@@ -737,20 +735,23 @@
                 const correctMapLink = `http://googleusercontent.com/maps.google.com/maps?q=${encodeURIComponent(`${ev.location || ''} ${ev.address || ''}`)}`;
 
                 html += `
-                    <div id="event-${ev.id}" class="bento-card flex flex-col md:flex-row hover:-translate-y-1 transition-all duration-300 rounded-lg">
-                        <div class="md:w-2/5 h-48 md:h-auto relative bg-slate-100 border-r border-slate-100">
+                    <div id="event-${ev.id}" class="bento-card flex flex-col md:flex-row hover:-translate-y-1 transition-all duration-300 rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-sm mb-4 md:mb-0">
+                        <div class="md:w-2/5 h-48 md:h-auto relative bg-slate-100">
                             <img src="${finalImgUrl}" onerror="this.onerror=null; this.src='${safeFallback}';" class="w-full h-full object-cover absolute inset-0">
                         </div>
-                        <div class="md:w-3/5 flex flex-col bg-white border border-slate-100 rounded-r-lg">
+                        <div class="md:w-3/5 flex flex-col">
                             <div class="flex border-b border-slate-100">
-                                <div class="bg-slate-50 p-4 flex flex-col justify-center items-center min-w-[80px] border-r border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${sDate.toLocaleString('default', { month: 'short' })}</span><span class="text-2xl font-black text-slate-800">${dateDisplay}</span></div>
-                                <div class="p-4 flex-grow flex items-center"><h3 class="text-sm font-semibold leading-snug text-slate-900">${ev.title}</h3></div>
+                                <div class="bg-indigo-50 p-4 flex flex-col justify-center items-center min-w-[80px] border-r border-indigo-100">
+                                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${sDate.toLocaleString('default', { month: 'short' })}</span>
+                                    <span class="text-2xl font-black text-indigo-700">${dateDisplay}</span>
+                                </div>
+                                <div class="p-4 flex-grow flex items-center"><h3 class="text-sm font-bold leading-snug text-slate-900 line-clamp-2">${ev.title}</h3></div>
                             </div>
-                            <div class="p-4 text-xs text-slate-600 space-y-2 flex-grow">
-                                <div class="flex items-center justify-between"><span class="flex items-center font-medium">🕒 ${ev.time_info || 'Time TBC'}</span><span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${badgeColor} ml-2">${ev.event_type}</span></div>
+                            <div class="p-4 text-xs text-slate-600 space-y-3 flex-grow">
+                                <div class="flex items-center justify-between"><span class="flex items-center font-medium text-slate-700">🕒 ${ev.time_info || 'Time TBC'}</span><span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${badgeColor}">${ev.event_type}</span></div>
                                 <div class="flex items-start mt-2"><span class="mr-2">📍</span><div><span class="font-semibold text-slate-800">${ev.location || 'Location TBC'}</span><br><span class="text-[11px] text-slate-500">${ev.address || ''}</span></div></div>
                             </div>
-                            <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 rounded-br-lg">
+                            <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 mt-auto">
                                 <a href="${correctMapLink}" target="_blank" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center">🗺️ Open Map</a>
                             </div>
                         </div>
@@ -797,7 +798,7 @@
                                 ${locationTag}
                             </div>
                         </div>
-                        <div class="p-5 flex flex-col flex-grow">
+                        <div class="p-4 sm:p-5 flex flex-col flex-grow">
                             <div class="mb-3">
                                <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">${tag}</span>
                             </div>
@@ -854,8 +855,7 @@
 
         fetchHub();
         setInterval(fetchHub, 300000); 
-		
     </script>
-	<script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
