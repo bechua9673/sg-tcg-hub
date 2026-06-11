@@ -12,7 +12,7 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     
-	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='100' x='10' y='0' rx='10' fill='%234f46e5'/><circle cx='50' cy='50' r='25' fill='white'/><path d='M50 35 L65 50 L50 65 L35 50 Z' fill='%234f46e5'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='100' x='10' y='0' rx='10' fill='%234f46e5'/><circle cx='50' cy='50' r='25' fill='white'/><path d='M50 35 L65 50 L50 65 L35 50 Z' fill='%234f46e5'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,11 +36,6 @@
         .filter-pill { padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; background: transparent; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
         .filter-pill:hover { border-color: #94a3b8; color: #0f172a; }
         .filter-active { background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 600; }
-
-        .matched-vendor-banner { width: 100%; min-height: 110px; border-radius: 12px; overflow: hidden; display: flex; background-size: cover; background-position: center; border: 1px solid #e2e8f0;}
-        .matched-vendor-banner.no-logo { background-color: #f8fafc; border-style: dashed;}
-        .banner-name { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-        .banner-category { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;}
 
         .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
         .cal-cell { min-height: 100px; padding: 8px; border-right: 1px solid #f8fafc; border-bottom: 1px solid #f8fafc; }
@@ -69,8 +64,9 @@
         <div class="px-5 pb-3 flex space-x-2 overflow-x-auto no-scrollbar">
             <button onclick="setView('TCG News')" class="filter-pill filter-active" data-view="TCG News">TCG News</button>
             <button onclick="setView('Local Drops')" class="filter-pill" data-view="Local Drops">Products</button>
-            <button onclick="setView('Top Reddit Posts')" class="filter-pill" data-view="Top Reddit Posts">Top Reddit</button>
             <button onclick="setView('Calendar')" class="filter-pill" data-view="Calendar">Events</button>
+            <button onclick="setView('For Vendors')" class="filter-pill" data-view="For Vendors">For Vendors</button>
+            <button onclick="setView('About Us')" class="filter-pill" data-view="About Us">About</button>
         </div>
     </header>
 
@@ -88,8 +84,9 @@
             <nav class="mb-8">
                 <div onclick="setView('TCG News')" class="nav-item nav-active" data-view="TCG News">TCG News</div>
                 <div onclick="setView('Local Drops')" class="nav-item" data-view="Local Drops">Products & Drops</div>
-                <div onclick="setView('Top Reddit Posts')" class="nav-item" data-view="Top Reddit Posts">Top Reddit Posts</div>
                 <div onclick="setView('Calendar')" class="nav-item" data-view="Calendar">Event Calendar</div>
+                <div onclick="setView('For Vendors')" class="nav-item mt-4 border-t border-slate-100 pt-4" data-view="For Vendors">For Vendors</div>
+                <div onclick="setView('About Us')" class="nav-item" data-view="About Us">About Us</div>
             </nav>
 
             <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3">Series Filter</h2>
@@ -156,51 +153,81 @@
 
             <div id="load-more-container" class="text-center mt-12 hidden">
                 <button onclick="loadMore()" class="px-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-all shadow-sm">
-                    Load More Results ↓
+                    Load More Results &darr;
                 </button>
             </div>
         </div>
     </main>
 
-	<div id="report-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4">
-			<div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-				<div class="p-5 border-b border-slate-100 flex justify-between items-center">
-					<h3 class="font-bold text-slate-800">Report Content</h3>
-					<button onclick="closeReportModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
-				</div>
-				
-				<form action="https://formsubmit.co/sgtcghubscraper@gmail.com" method="POST" class="p-5 flex flex-col gap-4">
-					<input type="hidden" name="_captcha" value="true">
-					<input type="hidden" name="_subject" value="⚠️ New TCG Hub Post Report">
-					<input type="text" name="_honey" style="display:none"> <input type="hidden" id="report-url" name="Post_URL" value="">
-					
-					<div>
-						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Post Title</label>
-						<input type="text" id="report-title" name="Post_Title" readonly class="w-full text-xs font-semibold bg-slate-50 p-2 rounded border border-slate-200 text-slate-600 outline-none">
-					</div>
+    <!-- Post Preview Modal -->
+    <div id="preview-modal" class="hidden fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="relative w-full h-48 md:h-64 bg-slate-100 flex-shrink-0">
+                <img id="preview-image" src="" class="w-full h-full object-contain">
+                <button onclick="closePreviewModal()" class="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-md transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div class="p-5 md:p-6 flex flex-col flex-grow overflow-y-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <span id="preview-tag" class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest px-2 py-1 bg-indigo-50 rounded"></span>
+                    <span id="preview-date" class="text-xs font-bold text-slate-500"></span>
+                </div>
+                <h2 id="preview-title" class="text-lg md:text-xl font-bold text-slate-800 mb-4 leading-snug"></h2>
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Source:</span>
+                    <span id="preview-source" class="bg-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded"></span>
+                </div>
+                <div class="mt-auto pt-4 border-t border-slate-100 flex gap-3">
+                    <a id="preview-link" href="#" target="_blank" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center font-bold py-3 px-4 rounded-lg transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
+                        <span>Open Original Post</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-					<div>
-						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Reason for Report</label>
-						<select name="Reason" required class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 bg-white">
-							<option value="" disabled selected>Select an issue...</option>
-							<option value="Broken Link / Dead Page">Broken Link / Dead Page</option>
-							<option value="Spam / Irrelevant Content">Spam / Irrelevant Content</option>
-							<option value="Incorrect Categorization">Incorrect Categorization</option>
-							<option value="Offensive / Inappropriate">Offensive / Inappropriate</option>
-						</select>
-					</div>
+    <!-- Report Modal -->
+    <div id="report-modal" class="hidden fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800">Report Content</h3>
+                <button onclick="closeReportModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+            </div>
+            
+            <form action="https://formsubmit.co/sgtcghubscraper@gmail.com" method="POST" class="p-5 flex flex-col gap-4">
+                <input type="hidden" name="_captcha" value="true">
+                <input type="hidden" name="_subject" value="⚠️ New TCG Hub Post Report">
+                <input type="text" name="_honey" style="display:none"> 
+                <input type="hidden" id="report-url" name="Post_URL" value="">
+                
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Post Title</label>
+                    <input type="text" id="report-title" name="Post_Title" readonly class="w-full text-xs font-semibold bg-slate-50 p-2 rounded border border-slate-200 text-slate-600 outline-none">
+                </div>
 
-					<div>
-						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Additional Details (Optional)</label>
-						<textarea name="Details" rows="3" class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 resize-none"></textarea>
-					</div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Reason for Report</label>
+                    <select name="Reason" required class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 bg-white">
+                        <option value="" disabled selected>Select an issue...</option>
+                        <option value="Broken Link / Dead Page">Broken Link / Dead Page</option>
+                        <option value="Spam / Irrelevant Content">Spam / Irrelevant Content</option>
+                        <option value="Incorrect Categorization">Incorrect Categorization</option>
+                        <option value="Offensive / Inappropriate">Offensive / Inappropriate</option>
+                    </select>
+                </div>
 
-					<button type="submit" class="w-full bg-red-500 text-white text-xs font-bold uppercase tracking-widest py-3 rounded hover:bg-red-600 transition-colors mt-2">Submit Report</button>
-				</form>
-			</div>
-		</div>
-<script>
-const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Additional Details (Optional)</label>
+                    <textarea name="Details" rows="3" class="w-full text-sm p-2 rounded border border-slate-200 outline-none focus:border-indigo-500 resize-none bg-slate-50 focus:bg-white transition-colors"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-red-500 text-white text-xs font-bold uppercase tracking-widest py-3 rounded hover:bg-red-600 transition-colors mt-2">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7";
         const _client = supabase.createClient(S_URL, S_KEY);
 
@@ -211,11 +238,9 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         let currentVendorFilter = 'All'; 
         let currentCalDate = new Date(); 
         
-        // Default to Grid Layout
         let newsLayout = 'grid';
-        
         let currentPage = 1;
-        const ITEMS_PER_PAGE = 48; // Increased global page size
+        const ITEMS_PER_PAGE = 48; 
         
         let allData = [];
         let allEvents = [];
@@ -225,6 +250,29 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         
         let currentSlide = 0;
         let slideInterval;
+
+        function openPreviewModal(idx) {
+            const item = allData.find(i => i._internalId === idx);
+            if (!item) return;
+
+            let rawTag = item.franchise ? item.franchise.split(',')[0].trim() : "NEW";
+            const tag = rawTag.toLowerCase() === 'pokemon' ? 'Pokémon' : rawTag.toUpperCase();
+            const displaySource = (item.source || 'UNKNOWN').replace('Telegram: ', '');
+            const displayDate = new Date(item.published_date || item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            document.getElementById('preview-image').src = item.image_url || `https://placehold.co/600x400/f8fafc/94a3b8?text=${tag}`;
+            document.getElementById('preview-tag').innerText = tag;
+            document.getElementById('preview-date').innerText = displayDate;
+            document.getElementById('preview-title').innerText = item.title || 'Untitled';
+            document.getElementById('preview-source').innerText = displaySource;
+            document.getElementById('preview-link').href = item.url;
+
+            document.getElementById('preview-modal').classList.remove('hidden');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('preview-modal').classList.add('hidden');
+        }
 
         function openReportModal(url, title) {
             document.getElementById('report-url').value = url;
@@ -260,7 +308,7 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                 ]);
                 
                 if (resVendors.data) vendorBanners = resVendors.data;
-                if (resNews.data) allData = resNews.data;
+                if (resNews.data) allData = resNews.data.map((item, index) => ({ ...item, _internalId: index }));
                 if (resEvents.data) allEvents = resEvents.data;
                 if (resCommonEvents.data) commonEvents = resCommonEvents.data;
 
@@ -296,32 +344,30 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                 return (item.category || '') === currentView;
             });
             
-            if (currentView === 'Calendar' || currentSearch !== '' || billboardData.length === 0) {
+            if (currentView === 'Calendar' || currentView === 'About Us' || currentView === 'For Vendors' || currentSearch !== '' || billboardData.length === 0) {
                 container.classList.add('hidden');
                 clearInterval(slideInterval);
                 return;
             }
             
             container.classList.remove('hidden');
-            track.innerHTML = billboardData.map(post => `
-                <article class="min-w-full h-full relative flex-shrink-0 cursor-pointer" onclick="window.open('${post.url}', '_blank')">
+            track.innerHTML = billboardData.map(post => {
+                const isNews = currentView === 'TCG News';
+                const wrapperStart = isNews ? `<a href="${post.url}" target="_blank" class="` : `<div onclick="openPreviewModal(${post._internalId})" class="cursor-pointer `;
+                const wrapperEnd = isNews ? `</a>` : `</div>`;
+                
+                return `
+                ${wrapperStart}min-w-full h-full relative flex-shrink-0">
                     <img src="${post.image_url}" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent"></div>
                     <div class="absolute bottom-0 left-0 p-6 md:p-10 w-full md:w-3/4">
-                        <span class="text-indigo-300 font-bold text-[10px] uppercase tracking-widest mb-2 block">${post.source.replace('Telegram: ', '').replace('Reddit: r/', '')}</span>
+                        <span class="text-indigo-300 font-bold text-[10px] uppercase tracking-widest mb-2 block">${post.source.replace('Telegram: ', '')}</span>
                         <h2 class="text-white text-xl md:text-3xl font-bold leading-tight mb-3 line-clamp-2 hover:underline">${post.title}</h2>
                     </div>
-                </article>
-            `).join('');
+                ${wrapperEnd}`
+            }).join('');
             
             startCarousel();
-        }
-
-        function startCarousel() {
-            clearInterval(slideInterval);
-            if(billboardData.length > 1) {
-                slideInterval = setInterval(nextSlide, 6000);
-            }
         }
 
         function nextSlide() {
@@ -351,13 +397,14 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                 if(btn.tagName === 'DIV') btn.classList.toggle('nav-active', btn.getAttribute('data-view') === viewName);
             });
             
-            const isCalendar = viewName === 'Calendar';
-            document.getElementById('desktop-filters').style.display = isCalendar ? 'none' : 'flex';
-            document.getElementById('mobile-filters').style.display = isCalendar ? 'none' : '';
-            document.getElementById('desktop-calendar-filters').style.display = isCalendar ? 'block' : 'none';
-            document.getElementById('search-container').style.display = isCalendar ? 'none' : 'flex';
+            const hideFilters = viewName === 'Calendar' || viewName === 'About Us' || viewName === 'For Vendors';
             
-            document.getElementById('news-layout-toggle').style.display = (viewName === 'TCG News' || viewName === 'Top Reddit Posts') ? 'flex' : 'none';
+            document.getElementById('desktop-filters').style.display = hideFilters ? 'none' : 'flex';
+            document.getElementById('mobile-filters').style.display = hideFilters ? 'none' : '';
+            document.getElementById('desktop-calendar-filters').style.display = viewName === 'Calendar' ? 'block' : 'none';
+            document.getElementById('search-container').style.display = hideFilters ? 'none' : 'flex';
+            
+            document.getElementById('news-layout-toggle').style.display = (viewName === 'TCG News') ? 'flex' : 'none';
             
             renderBillboard(); render();
         }
@@ -385,11 +432,121 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
             container.innerHTML = `<div class="empty-state">${icon}<h3 class="text-sm font-semibold text-slate-700">${message}</h3><p class="text-xs text-slate-400 mt-1">Try adjusting your filters.</p></div>`;
         }
 
+        function renderAboutUs(container) {
+            container.innerHTML = `
+                <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-8 md:p-12 mb-10 mt-4">
+                    <h2 class="text-2xl md:text-4xl font-black text-slate-800 mb-6 tracking-tight uppercase">About SG TCG Hub</h2>
+                    <div class="prose prose-slate prose-sm md:prose-base text-slate-600 mb-12">
+                        <p class="mb-4">Welcome to SG TCG Hub (Phase 1). Our vision is simple: to create a centralized, definitive hub for the Singaporean Trading Card Game community.</p>
+                        <p class="mb-4">We know how exhausting it is to constantly jump between Facebook groups, Telegram channels, and official websites just to stay updated on the latest drops, meta changes, and events. SG TCG Hub aggregates all of this scattered information into one clean, easily digestible dashboard.</p>
+                        <p class="mb-4">Whether you're hunting for the latest Pokémon restock, catching up on global news, or checking One Piece local tournament schedules, we bring the community's resources directly to you.</p>
+                    </div>
+
+                    <hr class="border-slate-100 mb-10">
+
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800 mb-6 tracking-tight uppercase">Contact Us</h2>
+                    <p class="text-sm text-slate-500 mb-8">Have a feature request, want to report an issue, or general feedback? Drop us a message below.</p>
+
+                    <form action="https://formsubmit.co/sgtcghubscraper@gmail.com" method="POST" class="space-y-5">
+                        <input type="hidden" name="_captcha" value="true">
+                        <input type="hidden" name="_subject" value="📬 SG TCG Hub Contact Form">
+                        <input type="text" name="_honey" style="display:none">
+                        <input type="hidden" name="_template" value="table">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Your Name</label>
+                                <input type="text" name="Name" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Your Email</label>
+                                <input type="email" name="Email" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Inquiry Type</label>
+                            <select name="Type" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                                <option value="" disabled selected>Select an option...</option>
+                                <option value="Feature Request">Feature Request</option>
+                                <option value="Bug Report">Bug Report</option>
+                                <option value="General Feedback">General Feedback</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Message</label>
+                            <textarea name="Message" rows="5" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 resize-none bg-slate-50 focus:bg-white transition-colors"></textarea>
+                        </div>
+
+                        <button type="submit" class="bg-indigo-600 text-white font-bold uppercase text-xs tracking-widest py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">Send Message</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function renderVendorForm(container) {
+            container.innerHTML = `
+                <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-8 md:p-12 mb-10 mt-4">
+                    <h2 class="text-2xl md:text-4xl font-black text-slate-800 mb-6 tracking-tight uppercase">For Vendors</h2>
+                    <div class="prose prose-slate prose-sm md:prose-base text-slate-600 mb-12">
+                        <p class="mb-4">Are you a local shop or online vendor operating in Singapore? SG TCG Hub helps drive traffic to your drops, events, and restocks completely free of charge.</p>
+                        <p class="mb-4">Use the form below to request adding your store's Telegram channel or website to our aggregator. If your store is already listed and you wish to be removed or have your logo updated, you can also request that here.</p>
+                    </div>
+
+                    <hr class="border-slate-100 mb-10">
+
+                    <form action="https://formsubmit.co/sgtcghubscraper@gmail.com" method="POST" class="space-y-5">
+                        <input type="hidden" name="_captcha" value="true">
+                        <input type="hidden" name="_subject" value="🏢 Vendor Request Form">
+                        <input type="text" name="_honey" style="display:none">
+                        <input type="hidden" name="_template" value="table">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Store / Vendor Name</label>
+                                <input type="text" name="Store_Name" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Contact Email</label>
+                                <input type="email" name="Email" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Request Type</label>
+                            <select name="Request_Type" required class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                                <option value="" disabled selected>Select an option...</option>
+                                <option value="Add My Telegram Channel">Add My Telegram Channel</option>
+                                <option value="Add My Shopify/Website">Add My Shopify/Website</option>
+                                <option value="Update Logo / Name">Update Logo / Name</option>
+                                <option value="Remove My Store">Remove My Store from Hub</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Source Link (Telegram Handle or Website URL)</label>
+                            <input type="text" name="Source_Link" class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 bg-slate-50 focus:bg-white transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Additional Details / Logo Link</label>
+                            <textarea name="Details" rows="4" class="w-full text-sm p-3 rounded-lg border border-slate-200 outline-none focus:border-indigo-500 resize-none bg-slate-50 focus:bg-white transition-colors"></textarea>
+                        </div>
+
+                        <button type="submit" class="bg-indigo-600 text-white font-bold uppercase text-xs tracking-widest py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">Submit Request</button>
+                    </form>
+                </div>
+            `;
+        }
+
         function render(resetScroll = true) {
             const container = document.getElementById('content-container');
             const loadMoreBtn = document.getElementById('load-more-container');
             
             if (currentView === 'Calendar') { container.innerHTML = ''; loadMoreBtn.classList.add('hidden'); renderCalendarGrid(container); renderEventList(container); if(resetScroll) document.getElementById('scroll-area').scrollTop = 0; return; }
+            if (currentView === 'About Us') { container.innerHTML = ''; loadMoreBtn.classList.add('hidden'); renderAboutUs(container); if(resetScroll) document.getElementById('scroll-area').scrollTop = 0; return; }
+            if (currentView === 'For Vendors') { container.innerHTML = ''; loadMoreBtn.classList.add('hidden'); renderVendorForm(container); if(resetScroll) document.getElementById('scroll-area').scrollTop = 0; return; }
 
             let filteredData = allData.filter(item => {
                 if(currentView === 'TCG News') return item.category === 'Global News' || item.category === 'Local News';
@@ -414,7 +571,7 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                 let vendorButtons = `<div class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-slate-100 no-scrollbar">
                     <button onclick="setVendorFilter('All')" class="filter-pill ${currentVendorFilter === 'All' ? 'filter-active' : ''}">All Vendors</button>`;
                 uniqueVendors.forEach(v => {
-                    const cleanName = v.replace('Telegram: ', '').replace('Reddit: r/', '');
+                    const cleanName = v.replace('Telegram: ', '');
                     vendorButtons += `<button onclick="setVendorFilter('${v}')" class="filter-pill ${currentVendorFilter === v ? 'filter-active' : ''}">${cleanName}</button>`;
                 });
                 vendorButtons += `</div>`;
@@ -429,40 +586,50 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
 
             const paginatedData = filteredData.slice(0, currentPage * ITEMS_PER_PAGE);
             
-            // IF viewing all vendors, bypass global pagination to guarantee every vendor gets items
             if (currentView === 'Local Drops' && !currentSearch && currentVendorFilter === 'All') {
-                loadMoreBtn.classList.add('hidden'); // Hide load more, we show everything grouped
+                loadMoreBtn.classList.add('hidden'); 
                 const groupedVendors = {};
                 
-                // Group ALL available data (not just the paginated slice)
                 filteredData.forEach(item => { 
                     const source = item.source || 'UNKNOWN'; 
                     if (!groupedVendors[source]) groupedVendors[source] = []; 
                     groupedVendors[source].push(item); 
                 });
                 
-                // Shuffle the vendors so everyone gets a fair chance at being seen
                 let vendorEntries = Object.entries(groupedVendors);
                 vendorEntries = shuffleArray(vendorEntries);
                 
                 let html = `<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 w-full">`;
                 for (const [vendor, items] of vendorEntries) {
-                    const cleanVendor = vendor.replace('Telegram: ', '').replace('Reddit: r/', '').trim();
+                    const cleanVendor = vendor.replace('Telegram: ', '').trim();
                     const matchedVendor = vendorBanners.find(v => (v.name || '').toUpperCase() === cleanVendor.toUpperCase() || (v.name || '').toUpperCase() === vendor.toUpperCase());
-                    
-                    // Large Report Button for the Vendor
-                    const vendorReportBtn = `<button onclick="openReportModal('${cleanVendor}', 'Vendor Report: ${cleanVendor}'); return false;" class="absolute top-4 right-4 bg-white/20 hover:bg-red-500 hover:text-white text-slate-200 p-2 rounded-full backdrop-blur-sm transition-colors shadow-sm" title="Report Vendor"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
                     
                     let vendorHtml = `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col h-[400px]">`;
                     
+                    const displayName = (matchedVendor && matchedVendor.display_name) ? matchedVendor.display_name : cleanVendor;
+                    const lightReportBtn = `<button onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${cleanVendor}', 'Vendor Report: ${cleanVendor}');" class="absolute top-4 right-4 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 p-2 rounded-full transition-colors shadow-sm" title="Report Vendor"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
+
                     if(matchedVendor && matchedVendor.logo_url) {
-                        vendorHtml += `<div class="w-full h-24 flex-shrink-0 bg-cover bg-center border-b border-slate-100 relative" style="background-image: url('${matchedVendor.logo_url}');"><div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 to-transparent"></div>${vendorReportBtn}<div class="absolute bottom-4 left-4"><h3 class="text-white font-bold text-lg leading-none">${cleanVendor}</h3></div></div>`;
+                        vendorHtml += `
+                        <div class="w-full h-24 flex-shrink-0 bg-white border-b border-slate-100 p-4 flex items-center relative">
+                            ${lightReportBtn}
+                            <div class="flex items-center gap-4 w-full pr-10">
+                                <img src="${matchedVendor.logo_url}" class="w-14 h-14 rounded-lg object-cover border border-slate-200 flex-shrink-0 shadow-sm">
+                                <h3 class="text-slate-800 font-black text-xl md:text-2xl leading-tight truncate">${displayName}</h3>
+                            </div>
+                        </div>`;
                     } else {
-                        vendorHtml += `<div class="w-full h-20 flex-shrink-0 bg-slate-50 border-b border-slate-100 p-4 flex flex-col justify-end relative">${vendorReportBtn.replace('text-slate-200', 'text-slate-400').replace('bg-white/20', 'bg-slate-200')}<h3 class="text-slate-800 font-bold text-lg leading-none">${cleanVendor}</h3></div>`;
+                        vendorHtml += `
+                        <div class="w-full h-24 flex-shrink-0 bg-white border-b border-slate-100 p-4 flex items-center relative">
+                            ${lightReportBtn}
+                            <div class="flex items-center gap-4 w-full pr-10">
+                                <div class="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0 flex items-center justify-center text-slate-400 font-bold text-xl shadow-sm">${displayName.charAt(0).toUpperCase()}</div>
+                                <h3 class="text-slate-800 font-black text-xl md:text-2xl leading-tight truncate">${displayName}</h3>
+                            </div>
+                        </div>`;
                     }
                     
                     vendorHtml += `<div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">`;
-                    // Limit to 24 items max per vendor
                     items.slice(0, 24).forEach(item => { vendorHtml += buildRowCard(item, 'compact'); });
                     vendorHtml += `</div></div>`;
                     html += vendorHtml;
@@ -474,8 +641,8 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                 
                 if(currentSearch) container.innerHTML += `<p class="text-xs font-medium text-slate-500 mb-5 border-b border-slate-200 pb-2">Search Results: ${filteredData.length}</p>`;
                 
-                if ((currentView === 'TCG News' || currentView === 'Top Reddit Posts') && newsLayout === 'grid') {
-                     let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 w-full">`;
+                if ((currentView === 'TCG News') && newsLayout === 'grid') {
+                     let html = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 w-full">`;
                      paginatedData.forEach(item => { html += buildRowCard(item, 'grid'); });
                      container.innerHTML += html + `</div>`;
                 } else {
@@ -594,65 +761,80 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
 
         function buildRowCard(item, layout = 'list') {
             const displayDate = new Date(item.published_date || item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const placeholder = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23f8fafc'><rect width='100%25' height='100%25'/></svg>`;
             
             let rawTag = item.franchise ? item.franchise.split(',')[0].trim() : "NEW";
             const tag = rawTag.toLowerCase() === 'pokemon' ? 'Pokémon' : rawTag.toUpperCase();
             
+            const svgColor = tag === 'Pokémon' ? 'ef4444' : tag === 'ONE PIECE' ? '0ea5e9' : '94a3b8';
+            const placeholder = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400' fill='%23f8fafc'><rect width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='42' font-weight='900' fill='%23${svgColor}' opacity='0.4'>${tag}</text></svg>`;
+            
             let titleHTML = item.title || 'Untitled';
             if(currentSearch) titleHTML = titleHTML.replace(new RegExp(currentSearch, "gi"), match => `<mark class="bg-yellow-200 text-slate-900 px-1 rounded">${match}</mark>`);
 
-            const displaySource = (item.source || 'UNKNOWN').replace('Telegram: ', '').replace('Reddit: r/', '');
+            const displaySource = (item.source || 'UNKNOWN').replace('Telegram: ', '');
+            const displaySourceClean = displaySource.length > 20 ? displaySource.substring(0, 20) + '...' : displaySource;
             
             let locationTag = '';
             if (currentView === 'TCG News') {
                  const loc = item.category === 'Local News' ? 'LOCAL' : 'OVERSEAS';
                  const locStyle = item.category === 'Local News' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700';
-                 locationTag = `<span class="${locStyle} text-[9px] font-bold uppercase px-1.5 py-0.5 rounded leading-none">${loc}</span>`;
+                 locationTag = `<span class="${locStyle} text-[9px] font-bold uppercase px-1.5 py-0.5 rounded leading-none shadow-sm">${loc}</span>`;
             }
 
-            // Enlarged Report Button Logic
             const safeTitle = titleHTML.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            const reportBtn = `<button onclick="openReportModal('${item.url}', '${safeTitle}'); return false;" class="text-slate-400 hover:text-red-500 transition-colors ml-auto flex items-center gap-1" title="Report Post"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
+            const reportBtn = `<button onclick="event.preventDefault(); event.stopPropagation(); openReportModal('${item.url}', '${safeTitle}');" class="text-slate-400 hover:text-red-500 transition-colors ml-auto flex items-center gap-1" title="Report Post"><svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg></button>`;
+
+            const isNews = currentView === 'TCG News';
+            const wrapperStart = isNews ? `<a href="${item.url}" target="_blank" class="` : `<div onclick="openPreviewModal(${item._internalId})" class="cursor-pointer `;
+            const wrapperEnd = isNews ? `</a>` : `</div>`;
 
             if (layout === 'grid') {
                 return `
-                    <a href="${item.url}" target="_blank" class="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col h-full group">
-                        <div class="h-40 w-full overflow-hidden bg-slate-50"><img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"></div>
-                        <div class="p-4 flex flex-col flex-grow">
-                            <div class="flex justify-between items-center mb-2">
-                               <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${tag}</span>
-                               ${locationTag}
-                            </div>
-                            <h3 class="text-sm font-bold text-slate-800 line-clamp-3 mb-3 group-hover:text-indigo-600 transition-colors">${titleHTML}</h3>
-                            <div class="mt-auto flex items-center gap-2 border-t border-slate-50 pt-3">
-                                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate max-w-[120px]">${displaySource}</span>
-                                 <span class="text-[10px] font-medium text-slate-400">${displayDate}</span>
-                                 ${reportBtn}
+                    ${wrapperStart}bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 flex flex-col h-full group">
+                        <div class="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
+                            <img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-in-out">
+                            <div class="absolute top-3 right-3 flex flex-col gap-2">
+                                ${locationTag}
                             </div>
                         </div>
-                    </a>`;
+                        <div class="p-5 flex flex-col flex-grow">
+                            <div class="mb-3">
+                               <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">${tag}</span>
+                            </div>
+                            <h3 class="text-[15px] font-bold text-slate-800 line-clamp-3 mb-4 group-hover:text-indigo-600 transition-colors leading-relaxed">${titleHTML}</h3>
+                            <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                                 <div class="flex flex-col">
+                                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Source</span>
+                                     <span class="text-[11px] font-semibold text-slate-700 truncate max-w-[140px]">${displaySourceClean}</span>
+                                 </div>
+                                 <div class="flex items-center gap-3">
+                                     <span class="text-[11px] font-medium text-slate-400">${displayDate}</span>
+                                     ${reportBtn}
+                                 </div>
+                            </div>
+                        </div>
+                    ${wrapperEnd}`;
             }
             
             if (layout === 'compact') {
                 return `
-                    <a href="${item.url}" target="_blank" class="flex gap-3 group p-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100 relative">
+                    ${wrapperStart}flex gap-3 group p-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100 relative">
                         <img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="w-16 h-16 rounded object-cover border border-slate-100 flex-shrink-0">
                         <div class="flex flex-col flex-1 min-w-0 justify-center py-1">
                             <h4 class="text-[13px] font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors pr-6">${titleHTML}</h4>
                             <div class="flex items-center gap-2 mt-auto pt-1">
                                 <span class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">${tag}</span>
-                                <span class="text-[9px] font-medium text-slate-400 ml-auto">${displayDate}</span>
+                                <span class="text-[10px] font-bold text-slate-500 ml-auto">${displayDate}</span>
                             </div>
                         </div>
                         <div class="absolute top-2 right-2">${reportBtn}</div>
-                    </a>`;
+                    ${wrapperEnd}`;
             }
 
             const imgClass = (item.category || '').includes('News') ? "news-img-row" : "object-contain";
             return `
                 <article>
-                    <a href="${item.url}" target="_blank" class="row-card group flex w-full">
+                    ${wrapperStart}row-card group flex w-full">
                         <img src="${item.image_url || placeholder}" onerror="this.src='${placeholder}'" class="row-card-img ${imgClass}" alt="${titleHTML}" loading="lazy">
                         <div class="flex flex-col justify-center flex-grow py-2 pr-2 min-w-0">
                             <div class="flex justify-between items-center mb-1.5">
@@ -661,18 +843,17 @@ const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
                             </div>
                             <h3 class="text-sm md:text-base font-bold leading-snug text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-3 pr-4">${titleHTML}</h3>
                             <div class="flex items-center gap-3 mt-auto">
-                                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded truncate max-w-[150px]">${displaySource}</span>
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded truncate max-w-[150px]">Source: ${displaySource}</span>
                                 <span class="text-[11px] font-medium text-slate-400">${displayDate}</span>
                                 ${reportBtn}
                             </div>
                         </div>
-                    </a>
+                    ${wrapperEnd}
                 </article>`;
         }
 
         fetchHub();
         setInterval(fetchHub, 300000); 
-    </script>
     </script>
 </body>
 </html>

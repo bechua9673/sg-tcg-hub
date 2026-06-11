@@ -39,6 +39,7 @@
                         <select id="ws-type" class="p-2 border text-xs bg-gray-50 rounded-lg"><option value="Shopify">Shopify Feed</option><option value="Dynamic">Dynamic News</option><option value="RSS">RSS Feed (Google Alerts)</option></select>
                         <input type="text" id="ws-url" placeholder="URL" class="p-2 border text-xs col-span-2 bg-gray-50 rounded-lg">
                         <input type="text" id="ws-css" placeholder="CSS Selector (If Dynamic)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <input type="text" id="ws-display-name" placeholder="Display Name (Opt)" class="p-2 border text-xs bg-gray-50 rounded-lg">
                         <select id="ws-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option></select>
                         <select id="ws-category" class="p-2 border text-xs bg-gray-50 rounded-lg text-indigo-700 font-bold"><option value="Global News">Route: Global News</option><option value="Local News">Route: Local News</option><option value="Local Drops">Route: Local Drops</option><option value="Top Reddit Posts">Route: Top Reddit Posts</option></select>
                         <button onclick="addWebSource()" class="bg-indigo-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-indigo-700 col-span-2 rounded-lg">Add Web Source</button>
@@ -50,17 +51,19 @@
                     <div class="grid grid-cols-2 gap-2 mb-4">
                         <input type="text" id="ts-handle" placeholder="Channel Handle (e.g. mugitcg)" class="p-2 border text-xs col-span-2 bg-gray-50 rounded-lg">
                         <input type="number" id="ts-topic" placeholder="Topic ID (Leave blank if none)" class="p-2 border text-xs bg-gray-50 rounded-lg">
-                        <select id="ts-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option></select>
+                        <input type="text" id="ts-display-name" placeholder="Display Name (Opt)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <select id="ts-franchise" class="p-2 border text-xs col-span-2 bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option></select>
                         <button onclick="addTelegramSource()" class="bg-indigo-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-indigo-700 col-span-2 rounded-lg">Add Telegram Source</button>
                     </div>
                     <div id="tg-source-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
                 </div>
                 
-				<div class="lg:col-span-2 border-t border-gray-100 pt-6 mt-2">
+                <div class="lg:col-span-2 border-t border-gray-100 pt-6 mt-2">
                     <h2 class="text-xs font-black uppercase tracking-widest text-orange-600 mb-4">👾 Manage Reddit Scrapers (Top 15 Trending)</h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                         <input type="text" id="rs-sub" placeholder="Subreddit (e.g. PokemonTCG)" class="p-2 border text-xs bg-gray-50 rounded-lg">
                         <input type="text" id="rs-kw" placeholder="Keyword (Optional)" class="p-2 border text-xs bg-gray-50 rounded-lg">
+                        <input type="text" id="rs-display-name" placeholder="Display Name (Opt)" class="p-2 border text-xs bg-gray-50 rounded-lg">
                         <select id="rs-franchise" class="p-2 border text-xs bg-gray-50 rounded-lg"><option value="pokemon">Pokémon</option><option value="one piece">One Piece</option><option value="others">Others</option></select>
                         <button onclick="addRedditSource()" class="bg-orange-600 text-white px-4 py-2 text-xs font-bold uppercase hover:bg-orange-700 col-span-2 md:col-span-4 rounded-lg">Add Reddit Source</button>
                     </div>
@@ -71,8 +74,9 @@
                 <div>
                     <h2 class="text-xs font-black uppercase tracking-widest text-emerald-600 mb-4">🖼️ Vendor Banners (Shopify/Telegram)</h2>
                     <div class="flex space-x-2 mb-4">
-                        <input type="text" id="v-name" placeholder="Exact Source Name" class="p-2 border text-xs w-1/3 bg-gray-50 rounded-lg">
-                        <input type="file" id="v-logo" accept="image/*" class="p-1.5 border text-xs w-2/3 bg-gray-50 rounded-lg">
+                        <input type="text" id="v-name" placeholder="Exact Source Name" class="p-2 border text-xs w-1/4 bg-gray-50 rounded-lg">
+                        <input type="text" id="v-display-name" placeholder="Display Name (Opt)" class="p-2 border text-xs w-1/4 bg-gray-50 rounded-lg">
+                        <input type="file" id="v-logo" accept="image/*" class="p-1.5 border text-xs w-2/4 bg-gray-50 rounded-lg">
                         <button onclick="addVendor()" class="bg-emerald-500 text-white px-4 text-xs font-bold uppercase hover:bg-emerald-600 rounded-lg">Upload</button>
                     </div>
                     <div id="vendor-grid" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2"></div>
@@ -159,7 +163,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         const S_URL = "https://qkibavobmjqowhdmzkvi.supabase.co";
         const S_KEY = "sb_publishable_w2GSYOeWJY1FyERvGOurmw_RuYnEo_7"; 
         const _client = supabase.createClient(S_URL, S_KEY);
@@ -194,31 +198,70 @@
             return publicUrlData.publicUrl;
         }
 
-        async function loadSources() {
-            const { data: wData } = await _client.from('SCRAPE_SOURCES_WEB').select('*').order('source_name');
-            const wGrid = document.getElementById('web-source-grid'); wGrid.innerHTML = '';
-            if(wData) wData.forEach(item => { wGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.source_name}</b> <span class="text-gray-400">(${item.scrape_type})</span><br><span class="text-blue-500 truncate w-40 inline-block">${item.url}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_WEB', ${item.id}, '${item.source_name}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
+		async function loadSources() {
+			// 1. Load Web Sources
+			const { data: wData } = await _client.from('SCRAPE_SOURCES_WEB').select('*').order('source_name');
+			const wGrid = document.getElementById('web-source-grid'); wGrid.innerHTML = '';
+			if(wData) wData.forEach(item => { 
+				const dName = item.display_name ? ` <span class="text-indigo-500 font-bold">(${item.display_name})</span>` : '';
+				wGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.source_name}</b>${dName} <span class="text-gray-400">(${item.scrape_type})</span><br><span class="text-blue-500 truncate w-40 inline-block">${item.url}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_WEB', ${item.id}, '${item.source_name}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; 
+			});
 
-            const { data: tData } = await _client.from('SCRAPE_SOURCES_TELEGRAM').select('*').order('channel_handle');
-            const tGrid = document.getElementById('tg-source-grid'); tGrid.innerHTML = '';
-            if(tData) tData.forEach(item => { tGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.channel_handle}</b><br><span class="text-gray-500">Topic: ${item.topic_id || 'Main Channel'}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_TELEGRAM', ${item.id}, '${item.channel_handle}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
-            
-            const { data: rdData } = await _client.from('SCRAPE_SOURCES_REDDIT').select('*').order('subreddit');
-            const rdGrid = document.getElementById('reddit-source-grid'); rdGrid.innerHTML = '';
-            if(rdData) rdData.forEach(item => { rdGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>r/${item.subreddit}</b><br><span class="text-gray-500">Search: "${item.keyword || 'ALL'}" | TOP 15</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_REDDIT', ${item.id}, 'r/${item.subreddit}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; });
+			// 2. Load Telegram Sources
+			const { data: tData } = await _client.from('SCRAPE_SOURCES_TELEGRAM').select('*').order('channel_handle');
+			const tGrid = document.getElementById('tg-source-grid'); tGrid.innerHTML = '';
+			if(tData) tData.forEach(item => { 
+				const dName = item.display_name ? ` <span class="text-indigo-500 font-bold">(${item.display_name})</span>` : '';
+				tGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>${item.channel_handle}</b>${dName}<br><span class="text-gray-500">Topic: ${item.topic_id || 'Main Channel'}</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_TELEGRAM', ${item.id}, '${item.channel_handle}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; 
+			});
+			
+			// 3. Load Reddit Sources
+			const { data: rdData } = await _client.from('SCRAPE_SOURCES_REDDIT').select('*').order('subreddit');
+			const rdGrid = document.getElementById('reddit-source-grid'); rdGrid.innerHTML = '';
+			if(rdData) rdData.forEach(item => { 
+				const dName = item.display_name ? ` <span class="text-indigo-500 font-bold">(${item.display_name})</span>` : '';
+				rdGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><div><b>r/${item.subreddit}</b>${dName}<br><span class="text-gray-500">Search: "${item.keyword || 'ALL'}" | TOP 15</span></div> <button onclick="deleteSource('SCRAPE_SOURCES_REDDIT', ${item.id}, 'r/${item.subreddit}')" class="text-red-500 font-bold ml-2 hover:underline">Purge</button></div>`; 
+			});
+		}
+
+        async function addWebSource() { 
+            const data = { 
+                source_name: document.getElementById('ws-name').value, 
+                display_name: document.getElementById('ws-display-name').value || null,
+                url: document.getElementById('ws-url').value, 
+                scrape_type: document.getElementById('ws-type').value, 
+                css_selector: document.getElementById('ws-css').value || null, 
+                default_franchise: document.getElementById('ws-franchise').value, 
+                default_category: document.getElementById('ws-category').value 
+            }; 
+            if(!data.source_name || !data.url) return alert("Name and URL required!"); 
+            await _client.from('SCRAPE_SOURCES_WEB').insert([data]); 
+            loadSources(); 
         }
 
-        async function addWebSource() { const data = { source_name: document.getElementById('ws-name').value, url: document.getElementById('ws-url').value, scrape_type: document.getElementById('ws-type').value, css_selector: document.getElementById('ws-css').value || null, default_franchise: document.getElementById('ws-franchise').value, default_category: document.getElementById('ws-category').value }; if(!data.source_name || !data.url) return alert("Name and URL required!"); await _client.from('SCRAPE_SOURCES_WEB').insert([data]); loadSources(); }
-        async function addTelegramSource() { const data = { channel_handle: document.getElementById('ts-handle').value, topic_id: document.getElementById('ts-topic').value || null, default_franchise: document.getElementById('ts-franchise').value }; if(!data.channel_handle) return alert("Channel Handle required!"); await _client.from('SCRAPE_SOURCES_TELEGRAM').insert([data]); loadSources(); }
-		async function addRedditSource() { 
+        async function addTelegramSource() { 
+            const data = { 
+                channel_handle: document.getElementById('ts-handle').value, 
+                display_name: document.getElementById('ts-display-name').value || null,
+                topic_id: document.getElementById('ts-topic').value || null, 
+                default_franchise: document.getElementById('ts-franchise').value 
+            }; 
+            if(!data.channel_handle) return alert("Channel Handle required!"); 
+            await _client.from('SCRAPE_SOURCES_TELEGRAM').insert([data]); 
+            loadSources(); 
+        }
+
+        async function addRedditSource() { 
             const data = { 
                 subreddit: document.getElementById('rs-sub').value.replace('r/', ''), 
+                display_name: document.getElementById('rs-display-name').value || null,
                 keyword: document.getElementById('rs-kw').value.trim() || null, 
                 default_franchise: document.getElementById('rs-franchise').value, 
                 default_category: 'Top Reddit Posts' 
             }; 
             if(!data.subreddit) return alert("Subreddit is required!"); 
-            await _client.from('SCRAPE_SOURCES_REDDIT').insert([data]); loadSources(); 
+            await _client.from('SCRAPE_SOURCES_REDDIT').insert([data]); 
+            loadSources(); 
         }
 
         async function deleteSource(table, id, identifier) { 
@@ -235,13 +278,33 @@
         async function loadAssets() {
             const { data: vData } = await _client.from('VENDORS').select('*');
             const vGrid = document.getElementById('vendor-grid'); vGrid.innerHTML = '';
-            if(vData) vData.forEach(item => { vGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><span><b>${item.name}</b> <br> <a href="${item.logo_url}" target="_blank" class="text-blue-500 hover:underline">View Banner</a></span> <button onclick="deleteAsset('VENDORS', ${item.id})" class="text-red-500 font-bold ml-4 hover:underline">Delete</button></div>`; });
+            if(vData) vData.forEach(item => { 
+                const displayStr = item.display_name ? `${item.name} (${item.display_name})` : item.name;
+                vGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><span><b>${displayStr}</b> <br> <a href="${item.logo_url}" target="_blank" class="text-blue-500 hover:underline">View Banner</a></span> <button onclick="deleteAsset('VENDORS', ${item.id})" class="text-red-500 font-bold ml-4 hover:underline">Delete</button></div>`; 
+            });
 
             const { data: cData } = await _client.from('COMMON_EVENTS').select('*');
             const cGrid = document.getElementById('ce-grid'); cGrid.innerHTML = '';
             if(cData) cData.forEach(item => { cGrid.innerHTML += `<div class="bg-gray-50 text-[10px] px-3 py-2 flex justify-between items-center rounded-lg border border-gray-100"><span><b>${item.keyword}</b> <br> <a href="${item.logo_url}" target="_blank" class="text-blue-500 hover:underline">View Logo</a></span> <button onclick="deleteAsset('COMMON_EVENTS', ${item.id})" class="text-red-500 font-bold ml-4 hover:underline">Delete</button></div>`; });
         }
-        async function addVendor() { const imgUrl = await uploadImageToSupabase('v-logo', 'vendors'); if(!imgUrl) return alert("Please select an image!"); await _client.from('VENDORS').insert([{ name: document.getElementById('v-name').value.trim(), logo_url: imgUrl }]); document.getElementById('v-name').value=''; document.getElementById('v-logo').value=''; loadAssets(); }
+        
+        async function addVendor() { 
+            const imgUrl = await uploadImageToSupabase('v-logo', 'vendors'); 
+            if(!imgUrl) return alert("Please select an image!"); 
+            const displayName = document.getElementById('v-display-name').value.trim() || null;
+            
+            await _client.from('VENDORS').insert([{ 
+                name: document.getElementById('v-name').value.trim(), 
+                display_name: displayName,
+                logo_url: imgUrl 
+            }]); 
+            
+            document.getElementById('v-name').value=''; 
+            document.getElementById('v-display-name').value=''; 
+            document.getElementById('v-logo').value=''; 
+            loadAssets(); 
+        }
+        
         async function addCommonEvent() { const imgUrl = await uploadImageToSupabase('ce-logo', 'events'); if(!imgUrl) return alert("Please select an image!"); await _client.from('COMMON_EVENTS').insert([{ keyword: document.getElementById('ce-kw').value.toLowerCase().trim(), logo_url: imgUrl }]); document.getElementById('ce-kw').value=''; document.getElementById('ce-logo').value=''; loadAssets(); }
         async function deleteAsset(table, id) { await _client.from(table).delete().eq('id', id); loadAssets(); }
 
@@ -254,7 +317,6 @@
         async function addIgnoreKeyword() { await _client.from('IGNORE_KEYWORDS').insert([{ keyword: document.getElementById('ig-text').value.toLowerCase().trim() }]); document.getElementById('ig-text').value=''; loadKeywords(); }
         async function deleteKeyword(table, id) { await _client.from(table).delete().eq('id', id); loadKeywords(); }
         
-        // --- NEW TABBED ADMIN GRID LOGIC ---
         function setAdminPostFilter(filter) {
             currentAdminFilter = filter;
             ['All', 'Web', 'Google', 'Telegram', 'Reddit'].forEach(f => {
@@ -269,37 +331,31 @@
         }
 
         async function loadAdminData() { 
-            // Increased limit to easily grab Google Alerts
             const { data } = await _client.from('TCG_NEWS').select('*').order('created_at', { ascending: false }).limit(300); 
             adminPostsData = data || [];
             renderAdminGrid();
         }
 
-		function renderAdminGrid() {
+        function renderAdminGrid() {
             const grid = document.getElementById('admin-grid');
             grid.innerHTML = '';
             
-            // Get search query
-            const searchQuery = document.getElementById('admin-search').value.toLowerCase().trim();
+            const searchEl = document.getElementById('admin-search');
+            const searchQuery = searchEl ? searchEl.value.toLowerCase().trim() : '';
 
             let filtered = adminPostsData;
             
-            // Apply Live Search First
             if (searchQuery) {
-                filtered = filtered.filter(i => 
-                    (i.title || '').toLowerCase().includes(searchQuery) || 
-                    (i.source || '').toLowerCase().includes(searchQuery)
-                );
+                filtered = filtered.filter(i => (i.title || '').toLowerCase().includes(searchQuery) || (i.source || '').toLowerCase().includes(searchQuery));
             }
 
-            // Apply Tab Filters
             if (currentAdminFilter === 'Telegram') filtered = filtered.filter(i => (i.source || '').includes('Telegram'));
             else if (currentAdminFilter === 'Reddit') filtered = filtered.filter(i => (i.source || '').includes('Reddit'));
             else if (currentAdminFilter === 'Google') filtered = filtered.filter(i => (i.source || '') === 'Google Alerts');
             else if (currentAdminFilter === 'Web') filtered = filtered.filter(i => !(i.source || '').includes('Telegram') && !(i.source || '').includes('Reddit') && (i.source || '') !== 'Google Alerts');
 
             if(filtered.length === 0) {
-                grid.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 font-semibold uppercase tracking-widest">No posts found for this query.</div>';
+                grid.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 font-semibold uppercase tracking-widest">No posts found.</div>';
                 return;
             }
 
