@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SG TCG HUB | Premier Trading Card Game Aggregator</title>
     
-    <meta name="description" content="Singapore's premier Trading Card Game (TCG) news hub. Latest meta updates, local drops, and event calendar for Pokémon, One Piece, Yu-Gi-Oh, and more.">
-    <meta name="keywords" content="TCG, Trading Card Games, Pokemon TCG, One Piece Card Game, SG TCG, Singapore TCG, TCG Drops, Union Arena, Card Games">
-    <meta property="og:title" content="SG TCG HUB | Premier Trading Card Game Aggregator">
-    <meta property="og:description" content="Singapore's premier TCG news hub. Latest meta updates, local drops, and event calendar.">
+    <!-- SEO Optimized Title & Description -->
+    <title>SG TCG HUB | Singapore Trading Card Game News & Events</title>
+    <meta name="description" content="The ultimate Singapore Trading Card Game (SG TCG). Discover the latest Pokémon TCG drops, One Piece TCG (OP TCG) meta updates, and local SG card game events.">
+    <meta name="keywords" content="Singapore TCG, SG TCG, Singapore, Trading Card Game, OP TCG, Pokemon TCG, TCG Drops, SG Card Games, Preorder pokemon, preorder onepiece, preorder tcg">
+    
+    <!-- Open Graph (For Discord/Telegram/Facebook sharing) -->
+    <meta property="og:title" content="SG TCG Hub | Singapore Trading Card Game Aggregator">
+    <meta property="og:description" content="Your source for SG TCG news, Pokémon restocks, and One Piece TCG events in Singapore.">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.sgtcghub.com/">
     <meta name="twitter:card" content="summary_large_image">
     
+    <!-- Google Rich Results Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "SG TCG HUB",
+      "alternateName": "Singapore Trading Card Game Hub",
+      "url": "https://www.sgtcghub.com/",
+      "description": "Aggregator for Singapore Trading Card Game news, Pokemon TCG, and OP TCG events."
+    }
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='80' height='100' x='10' y='0' rx='10' fill='%234f46e5'/><circle cx='50' cy='50' r='25' fill='white'/><path d='M50 35 L65 50 L50 65 L35 50 Z' fill='%234f46e5'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -295,26 +311,55 @@
             document.getElementById('desktop-status').innerText = text;
         }
 
-        async function fetchHub() {
-            updateStatus('Syncing...');
-            try {
-                const [resVendors, resNews, resEvents, resCommonEvents] = await Promise.all([
-                    _client.from('VENDORS').select('*'),
-                    _client.from('TCG_NEWS').select('*').is('hidden', false).order('published_date', { ascending: false }),
-                    _client.from('EVENTS').select('*').order('start_date', { ascending: true }),
-                    _client.from('COMMON_EVENTS').select('*')
-                ]);
-                
-                if (resVendors.data) vendorBanners = resVendors.data;
-                if (resNews.data) allData = resNews.data.map((item, index) => ({ ...item, _internalId: index }));
-                if (resEvents.data) allEvents = resEvents.data;
-                if (resCommonEvents.data) commonEvents = resCommonEvents.data;
+// Add this helper function above fetchHub()
+function sortAndShuffleByDate(items) {
+    const grouped = {};
+    
+    // Group all items by their exact date (YYYY-MM-DD)
+    items.forEach(item => {
+        const dateStr = new Date(item.published_date || item.created_at).toISOString().split('T')[0];
+        if (!grouped[dateStr]) grouped[dateStr] = [];
+        grouped[dateStr].push(item);
+    });
 
-                updateStatus(`Updated ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
-                renderBillboard();
-                render();
-            } catch (error) { updateStatus('Sync Failed'); console.error(error); }
-        }
+    // Sort the date groups from newest to oldest
+    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+    
+    let result = [];
+    sortedDates.forEach(date => {
+        // Shuffle the items inside this specific day, then add to the final list
+        result = result.concat(shuffleArray(grouped[date]));
+    });
+    
+    return result;
+}
+
+	// Update your existing fetchHub() function to use it:
+	async function fetchHub() {
+		updateStatus('Syncing...');
+		try {
+			const [resVendors, resNews, resEvents, resCommonEvents] = await Promise.all([
+				_client.from('VENDORS').select('*'),
+				_client.from('TCG_NEWS').select('*').is('hidden', false), // Removed the DB order here
+				_client.from('EVENTS').select('*').order('start_date', { ascending: true }),
+				_client.from('COMMON_EVENTS').select('*')
+			]);
+			
+			if (resVendors.data) vendorBanners = resVendors.data;
+			if (resEvents.data) allEvents = resEvents.data;
+			if (resCommonEvents.data) commonEvents = resCommonEvents.data;
+
+			// Apply the new date-shuffle logic to the news data
+			if (resNews.data) {
+				const processedNews = sortAndShuffleByDate(resNews.data);
+				allData = processedNews.map((item, index) => ({ ...item, _internalId: index }));
+			}
+
+			updateStatus(`Updated ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+			renderBillboard();
+			render();
+		} catch (error) { updateStatus('Sync Failed'); console.error(error); }
+	}
 
         function scrollToEvent(id) {
             const el = document.getElementById(id);
@@ -435,7 +480,7 @@
                 <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-8 md:p-12 mb-10 mt-4">
                     <h2 class="text-2xl md:text-4xl font-black text-slate-800 mb-6 tracking-tight uppercase">About SG TCG Hub</h2>
                     <div class="prose prose-slate prose-sm md:prose-base text-slate-600 mb-12">
-                        <p class="mb-4">Welcome to SG TCG Hub (Phase 1). Our vision is simple: to create a centralized, definitive hub for the Singaporean Trading Card Game community.</p>
+                        <p class="mb-4">Welcome to SG TCG Hub. Our vision is simple: to create a centralized, definitive hub for the Singaporean Trading Card Game community.</p>
                         <p class="mb-4">We know how exhausting it is to constantly jump between Facebook groups, Telegram channels, and official websites just to stay updated on the latest drops, meta changes, and events. SG TCG Hub aggregates all of this scattered information into one clean, easily digestible dashboard.</p>
                         <p class="mb-4">Whether you're hunting for the latest Pokémon restock, catching up on global news, or checking One Piece local tournament schedules, we bring the community's resources directly to you.</p>
                     </div>
